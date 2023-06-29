@@ -90,31 +90,70 @@ func main() {
 The truth table for the three-valued logic system is shown here. It's a mathematical table used in logic—specifically in connection with three-valued algebra, three-valued functions, and propositional calculus—which sets out the functional values of logical expressions on each of their functional arguments, that is, for each combination of values taken by their logical variables.
 
 ```shell
-   NOT            AND             OR            XOR
- A | B      A | B | C      A | B | C      A | B | C
--------    -----------    -----------    -----------
- T | F      T | T | T      T | T | T      T | T | F
- N | N      T | N | N      T | N | T      T | N | T
- F | T      T | F | F      T | F | T      T | F | T
-            N | T | N      N | T | T      N | T | T
-            N | N | N      N | N | N      N | N | F
-            N | F | F      N | F | F      N | F | F
-            F | T | F      F | T | T      F | T | T
-            F | N | F      F | N | N      F | N | T
-            F | F | F      F | F | F      F | F | F
+ Truth Tables of Three-valued logic
+ (T=True, N=Nil, F=False)
 
-      NAND            NOR           XNOR
- A | B | C      A | B | C      A | B | C
------------    -----------    -----------
- T | T | F      T | T | F      T | T | T
- T | N | T      T | N | F      T | N | F
- T | F | T      T | F | F      T | F | F
- N | T | T      N | T | F      N | T | F
- N | N | T      N | N | T      N | N | T
- N | F | T      N | F | F      N | F | T
- F | T | T      F | T | F      F | T | F
- F | N | T      F | N | T      F | N | T
- F | F | T      F | F | T      F | F | T
+	NA   - Not
+	MA   - Modus Ponens Absorption
+	LA   - Law of Absorption
+	IA   - Implication Absorption
+
+	AND  - Logical AND
+	OR   - Logical OR
+	XOR  - Exclusive OR
+
+	NAND - Logical not AND
+	NOR  - Logical not OR
+	NXOR - Logical not XOR
+
+	IMP  - Implication in Lukasevich's Logic
+	MIN  - Minimum
+	MAX  - Maximum
+
+	 A  | NA      A  | MA      A  | LA      A  | IA
+	----+----    ----+----    ----+----    ----+----
+	 F  |  T      F  |  F      F  |  F      F  |  F
+	 N  |  N      N  |  T      N  |  F      N  |  T
+	 T  |  F      T  |  T      T  |  T      T  |  F
+
+
+	 A | B | AND       A | B |  OR       A | B | XOR
+	---+---+------    ---+---+------    ---+---+------
+	 F | F |  F        F | F |  F        F | F |  F
+	 F | N |  F        F | N |  N        F | N |  N
+	 F | T |  F        F | T |  T        F | T |  T
+	 N | F |  F        N | F |  N        N | F |  N
+	 N | N |  N        N | N |  N        N | N |  N
+	 N | T |  N        N | T |  T        N | T |  N
+	 T | F |  F        T | F |  T        T | F |  T
+	 T | N |  N        T | N |  T        T | N |  N
+	 T | T |  T        T | T |  T        T | T |  F
+
+
+	 A | B | NAND      A | B | NOR       A | B | NXOR
+	---+---+------    ---+---+------    ---+---+------
+	 F | F |  T        F | F |  T        F | F |  T
+	 F | N |  T        F | N |  N        F | N |  N
+	 F | T |  T        F | T |  F        F | T |  F
+	 N | F |  T        N | F |  N        N | F |  N
+	 N | N |  N        N | N |  N        N | N |  N
+	 N | T |  N        N | T |  F        N | T |  N
+	 T | F |  T        T | F |  F        T | F |  F
+	 T | N |  N        T | N |  F        T | N |  N
+	 T | T |  F        T | T |  F        T | T |  T
+
+
+	 A | B | IMP       A | B | MIN       A | B | MAX
+	---+---+------    ---+---+------    ---+---+------
+	 F | F |  T        F | F |  F        F | F |  F
+	 F | N |  T        F | N |  F        F | N |  N
+	 F | T |  T        F | T |  F        F | T |  T
+	 N | F |  N        N | F |  F        N | F |  N
+	 N | N |  T        N | N |  N        N | N |  N
+	 N | T |  T        N | T |  N        N | T |  T
+	 T | F |  F        T | F |  F        T | F |  T
+	 T | N |  N        T | N |  N        T | N |  T
+	 T | T |  T        T | T |  T        T | T |  T
 ```
 
 ## Explanation

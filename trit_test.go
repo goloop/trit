@@ -2,6 +2,59 @@ package trit
 
 import "testing"
 
+// TestDefault tests the Default method.
+func TestDefault(t *testing.T) {
+	t.Run("Default with bool value", func(t *testing.T) {
+		t1 := Nil
+		Default(&t1, true)
+		if t1 != True {
+			t.Errorf("Default did not update Nil to True")
+		}
+
+		t2 := Nil
+		Default(&t2, false)
+		if t2 != False {
+			t.Errorf("Default did not update Nil to False")
+		}
+	})
+
+	t.Run("Default with numeric value", func(t *testing.T) {
+		t1 := Nil
+		Default(&t1, int32(1)) // for example int32
+		if t1 != True {
+			t.Errorf("Default did not update Nil to True")
+		}
+
+		t2 := Nil
+		Default(&t2, int64(-1)) // for example int64
+		if t2 != False {
+			t.Errorf("Default did not update Nil to False")
+		}
+	})
+
+	t.Run("Default with Trit value", func(t *testing.T) {
+		t1 := Nil
+		Default(&t1, True)
+		if t1 != True {
+			t.Errorf("Default did not update Nil to True")
+		}
+
+		t2 := Nil
+		Default(&t2, False)
+		if t2 != False {
+			t.Errorf("Default did not update Nil to False")
+		}
+	})
+
+	t.Run("Should not update non-Nil Trit", func(t *testing.T) {
+		t1 := True
+		Default(&t1, false)
+		if t1 != True {
+			t.Errorf("Default updated non-Nil Trit")
+		}
+	})
+}
+
 // TestDef tests the Def method.
 func TestDef(t *testing.T) {
 	t.Run("Def should update Nil to True", func(t *testing.T) {
@@ -29,56 +82,56 @@ func TestDef(t *testing.T) {
 	})
 }
 
-// TestDefTrue tests the DefTrue method.
-func TestDefTrue(t *testing.T) {
-	t.Run("DefTrue should set Nil to True", func(t *testing.T) {
+// TestTrueIfNil tests the TrueIfNil method.
+func TestTrueIfNil(t *testing.T) {
+	t.Run("Should set Nil to True", func(t *testing.T) {
 		tr := Nil
-		tr.DefTrue()
+		tr.TrueIfNil()
 		if tr != True {
-			t.Errorf("DefTrue did not set Nil to True")
+			t.Errorf("TrueIfNil did not set Nil to True")
 		}
 	})
 
-	t.Run("DefTrue should not change True to False", func(t *testing.T) {
+	t.Run("Should not change True to False", func(t *testing.T) {
 		tr := True
-		tr.DefTrue()
+		tr.TrueIfNil()
 		if tr != True {
-			t.Errorf("DefTrue changed True to False")
+			t.Errorf("TrueIfNil changed True to False")
 		}
 	})
 
-	t.Run("DefTrue should not change False to True", func(t *testing.T) {
+	t.Run("Should not change False to True", func(t *testing.T) {
 		tr := False
-		tr.DefTrue()
+		tr.TrueIfNil()
 		if tr != False {
-			t.Errorf("DefTrue changed False to True")
+			t.Errorf("TrueIfNil changed False to True")
 		}
 	})
 }
 
-// TestDefFalse tests the DefFalse method.
-func TestDefFalse(t *testing.T) {
-	t.Run("DefFalse should set Nil to False", func(t *testing.T) {
+// TestFalseIfNil tests the FalseIfNil method.
+func TestFalseIfNil(t *testing.T) {
+	t.Run("Should set Nil to False", func(t *testing.T) {
 		tr := Nil
-		tr.DefFalse()
+		tr.FalseIfNil()
 		if tr != False {
-			t.Errorf("DefFalse did not set Nil to False")
+			t.Errorf("FalseIfNil did not set Nil to False")
 		}
 	})
 
-	t.Run("DefFalse should not change False to True", func(t *testing.T) {
+	t.Run("Should not change False to True", func(t *testing.T) {
 		tr := False
-		tr.DefFalse()
+		tr.FalseIfNil()
 		if tr != False {
-			t.Errorf("DefFalse changed False to True")
+			t.Errorf("FalseIfNil changed False to True")
 		}
 	})
 
-	t.Run("DefFalse should not change True to False", func(t *testing.T) {
+	t.Run("Should not change True to False", func(t *testing.T) {
 		tr := True
-		tr.DefFalse()
+		tr.FalseIfNil()
 		if tr != True {
-			t.Errorf("DefFalse changed True to False")
+			t.Errorf("FalseIfNil changed True to False")
 		}
 	})
 }
@@ -310,209 +363,349 @@ func TestString(t *testing.T) {
 
 // TestNot tests the Not method.
 func TestNot(t *testing.T) {
-	t.Run("Not should return False for True", func(t *testing.T) {
-		tr := True
-		result := tr.Not()
-		if result != False {
-			t.Errorf("Not did not return False for True")
-		}
-	})
+	tests := []struct {
+		name string
+		in   Trit
+		out  Trit
+	}{
+		{"Not should return True for False", False, True},
+		{"Not should return Nil for Nil", Nil, Nil},
+		{"Not should return False for True", True, False},
+	}
 
-	t.Run("Not should return Nil for Nil", func(t *testing.T) {
-		tr := Nil
-		result := tr.Not()
-		if result != Nil {
-			t.Errorf("Not did not return Nil for Nil")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.in.Not()
+			if result != test.out {
+				t.Errorf("Not did not return %v for %v", test.out, test.in)
+			}
+		})
+	}
+}
 
-	t.Run("Not should return True for False", func(t *testing.T) {
-		tr := False
-		result := tr.Not()
-		if result != True {
-			t.Errorf("Not did not return True for False")
-		}
-	})
+// TestMa tests the Ma method.
+func TestMa(t *testing.T) {
+	tests := []struct {
+		name string
+		in   Trit
+		out  Trit
+	}{
+		{"Ma should return False for False", False, False},
+		{"Ma should return True for Nil", Nil, True},
+		{"Ma should return True for True", True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.in.Ma()
+			if result != test.out {
+				t.Errorf("Ma did not return %v for %v", test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestLa tests the La method.
+func TestLa(t *testing.T) {
+	tests := []struct {
+		name string
+		in   Trit
+		out  Trit
+	}{
+		{"La should return False for False", False, False},
+		{"La should return False for Nil", Nil, False},
+		{"La should return True for True", True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.in.La()
+			if result != test.out {
+				t.Errorf("La did not return %v for %v", test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestIa tests the Ia method.
+func TestIa(t *testing.T) {
+	tests := []struct {
+		name string
+		in   Trit
+		out  Trit
+	}{
+		{"Ia should return False for False", False, False},
+		{"Ia should return True for Nil", Nil, True},
+		{"Ia should return False for True", True, False},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.in.Ia()
+			if result != test.out {
+				t.Errorf("Ia did not return %v for %v", test.out, test.in)
+			}
+		})
+	}
 }
 
 // TestAnd tests the And method.
 func TestAnd(t *testing.T) {
-	t.Run("And should return True for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.And(t2)
-		if result != True {
-			t.Errorf("And did not return True for (True, True)")
-		}
-	})
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"And should return False for (False, False)", False, False, False},
+		{"And should return False for (False, Nil)", False, Nil, False},
+		{"And should return False for (False, True)", False, True, False},
+		{"And should return False for (Nil, False)", Nil, False, False},
+		{"And should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"And should return Nil for (Nil, True)", Nil, True, Nil},
+		{"And should return False for (True, False)", True, False, False},
+		{"And should return Nil for (True, Nil)", True, Nil, Nil},
+		{"And should return True for (True, True)", True, True, True},
+	}
 
-	t.Run("And should return Nil for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.And(t2)
-		if result != Nil {
-			t.Errorf("And did not return Nil for (True, Nil)")
-		}
-	})
-
-	t.Run("And should return False for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.And(t2)
-		if result != False {
-			t.Errorf("And did not return False for (True, False)")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.And(test.b)
+			if result != test.out {
+				t.Errorf("And did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
 
 // TestOr tests the Or method.
 func TestOr(t *testing.T) {
-	t.Run("Or should return True for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.Or(t2)
-		if result != True {
-			t.Errorf("Or did not return True for (True, True)")
-		}
-	})
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Or should return False for (False, False)", False, False, False},
+		{"Or should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Or should return True for (False, True)", False, True, True},
+		{"Or should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Or should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Or should return True for (Nil, True)", Nil, True, True},
+		{"Or should return True for (True, False)", True, False, True},
+		{"Or should return True for (True, Nil)", True, Nil, True},
+		{"Or should return True for (True, True)", True, True, True},
+	}
 
-	t.Run("Or should return True for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.Or(t2)
-		if result != True {
-			t.Errorf("Or did not return True for (True, Nil)")
-		}
-	})
-
-	t.Run("Or should return True for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.Or(t2)
-		if result != True {
-			t.Errorf("Or did not return True for (True, False)")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Or(test.b)
+			if result != test.out {
+				t.Errorf("Or did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
 
 // TestXor tests the Xor method.
 func TestXor(t *testing.T) {
-	t.Run("Xor should return False for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.Xor(t2)
-		if result != False {
-			t.Errorf("Xor did not return False for (True, True)")
-		}
-	})
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Xor should return False for (False, False)", False, False, False},
+		{"Xor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Xor should return True for (False, True)", False, True, True},
+		{"Xor should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Xor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Xor should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Xor should return True for (True, False)", True, False, True},
+		{"Xor should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Xor should return False for (True, True)", True, True, False},
+	}
 
-	t.Run("Xor should return Nil for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.Xor(t2)
-		if result != Nil {
-			t.Errorf("Xor did not return Nil for (True, Nil)")
-		}
-	})
-
-	t.Run("Xor should return True for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.Xor(t2)
-		if result != True {
-			t.Errorf("Xor did not return True for (True, False)")
-		}
-	})
-
-	// Add more test cases to cover all possible scenarios
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Xor(test.b)
+			if result != test.out {
+				t.Errorf("Xor did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
 
 // TestNand tests the Nand method.
 func TestNand(t *testing.T) {
-	t.Run("Nand should return False for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.Nand(t2)
-		if result != False {
-			t.Errorf("Nand did not return False for (True, True)")
-		}
-	})
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Nand should return True for (False, False)", False, False, True},
+		{"Nand should return True for (False, Nil)", False, Nil, True},
+		{"Nand should return True for (False, True)", False, True, True},
+		{"Nand should return True for (Nil, False)", Nil, False, True},
+		{"Nand should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Nand should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Nand should return True for (True, False)", True, False, True},
+		{"Nand should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Nand should return False for (True, True)", True, True, False},
+	}
 
-	t.Run("Nand should return True for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.Nand(t2)
-		if result != True {
-			t.Errorf("Nand did not return True for (True, Nil)")
-		}
-	})
-
-	t.Run("Nand should return True for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.Nand(t2)
-		if result != True {
-			t.Errorf("Nand did not return True for (True, False)")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Nand(test.b)
+			if result != test.out {
+				t.Errorf("Nand did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
 
 // TestNor tests the Nor method.
 func TestNor(t *testing.T) {
-	t.Run("Nor should return False for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.Nor(t2)
-		if result != False {
-			t.Errorf("Nor did not return False for (True, True)")
-		}
-	})
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Nor should return True for (False, False)", False, False, True},
+		{"Nor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Nor should return False for (False, True)", False, True, False},
+		{"Nor should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Nor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Nor should return False for (Nil, True)", Nil, True, False},
+		{"Nor should return False for (True, False)", True, False, False},
+		{"Nor should return False for (True, Nil)", True, Nil, False},
+		{"Nor should return False for (True, True)", True, True, False},
+	}
 
-	t.Run("Nor should return False for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.Nor(t2)
-		if result != False {
-			t.Errorf("Nor did not return False for (True, Nil)")
-		}
-	})
-
-	t.Run("Nor should return False for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.Nor(t2)
-		if result != False {
-			t.Errorf("Nor did not return False for (True, False)")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Nor(test.b)
+			if result != test.out {
+				t.Errorf("Nor did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
 
-// TestXnor tests the Xnor method.
-func TestXnor(t *testing.T) {
-	t.Run("Xnor should return True for (True, True)", func(t *testing.T) {
-		t1 := True
-		t2 := True
-		result := t1.Xnor(t2)
-		if result != True {
-			t.Errorf("Xnor did not return True for (True, True)")
-		}
-	})
+// TestNxor tests the Nxor method.
+func TestNxor(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Nxor should return True for (False, False)", False, False, True},
+		{"Nxor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Nxor should return False for (False, True)", False, True, False},
+		{"Nxor should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Nxor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Nxor should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Nxor should return False for (True, False)", True, False, False},
+		{"Nxor should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Nxor should return True for (True, True)", True, True, True},
+	}
 
-	t.Run("Xnor should return Nil for (True, Nil)", func(t *testing.T) {
-		t1 := True
-		t2 := Nil
-		result := t1.Xnor(t2)
-		if result != Nil {
-			t.Errorf("Xnor did not return Nil for (True, Nil)")
-		}
-	})
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Nxor(test.b)
+			if result != test.out {
+				t.Errorf("Nxor did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
 
-	t.Run("Xnor should return False for (True, False)", func(t *testing.T) {
-		t1 := True
-		t2 := False
-		result := t1.Xnor(t2)
-		if result != False {
-			t.Errorf("Xnor did not return False for (True, False)")
-		}
-	})
+// TestMin tests the Min method.
+func TestMin(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Min should return False for (False, False)", False, False, False},
+		{"Min should return False for (False, Nil)", False, Nil, False},
+		{"Min should return False for (False, True)", False, True, False},
+		{"Min should return False for (Nil, False)", Nil, False, False},
+		{"Min should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Min should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Min should return False for (True, False)", True, False, False},
+		{"Min should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Min should return True for (True, True)", True, True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Min(test.b)
+			if result != test.out {
+				t.Errorf("Min did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestMax tests the Max method.
+func TestMax(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Max should return False for (False, False)", False, False, False},
+		{"Max should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Max should return True for (False, True)", False, True, True},
+		{"Max should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Max should return Nil for (Nil, Nil)", Nil, Nil, Nil},
+		{"Max should return True for (Nil, True)", Nil, True, True},
+		{"Max should return True for (True, False)", True, False, True},
+		{"Max should return True for (True, Nil)", True, Nil, True},
+		{"Max should return True for (True, True)", True, True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Max(test.b)
+			if result != test.out {
+				t.Errorf("Max did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestImp tests the Imp method.
+func TestImp(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Imp should return True for (False, False)", False, False, True},
+		{"Imp should return True for (False, Nil)", False, Nil, True},
+		{"Imp should return True for (False, True)", False, True, True},
+		{"Imp should return Nil for (Nil, False)", Nil, False, Nil},
+		{"Imp should return True for (Nil, Nil)", Nil, Nil, True},
+		{"Imp should return True for (Nil, True)", Nil, True, True},
+		{"Imp should return False for (True, False)", True, False, False},
+		{"Imp should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Imp should return True for (True, True)", True, True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := test.a.Imp(test.b)
+			if result != test.out {
+				t.Errorf("Imp did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
 }
