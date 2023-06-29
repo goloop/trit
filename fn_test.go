@@ -29,6 +29,48 @@ func TestLogicToTrit(t *testing.T) {
 		})
 	}
 
+	testsUint := []struct {
+		name string
+		in   uint
+		out  Trit
+	}{
+		{"1 should return True", 1, True},
+		{"0 should return Nil", 0, Nil},
+		{"1000000 should return True", 1000000, True},
+	}
+
+	for _, test := range testsUint {
+		t.Run(test.name, func(t *testing.T) {
+			result := logicToTrit(test.in)
+			if result != test.out {
+				t.Errorf("logicToTrit did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+
+	testsFloat := []struct {
+		name string
+		in   float64
+		out  Trit
+	}{
+		{"0.3 should return True", 0.3, True},
+		{"-0.3 should return False", -0.3, False},
+		{"0.0 should return Nil", 0.0, Nil},
+		{"-77.5 should return False", -77.5, False},
+		{"1000000.5 should return True", 1000000.5, True},
+	}
+
+	for _, test := range testsFloat {
+		t.Run(test.name, func(t *testing.T) {
+			result := logicToTrit(test.in)
+			if result != test.out {
+				t.Errorf("logicToTrit did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+
 	// Bool.
 	testsBool := []struct {
 		name string
