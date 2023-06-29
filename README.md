@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/trit/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/trit) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
+[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/trit)](https://goreportcard.com/report/github.com/goloop/trit) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/trit/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/trit) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
 
 
 # trit
@@ -181,3 +181,165 @@ Here's an explanation of some key parts of this package:
   - There are several methods for performing logic operations on Trit values including Not, And, Or, Xor, Nand, and Nor. These methods implement trinary logic versions of their respective boolean logic operations.
 
   - The logic operation methods follow truth tables for ternary logic which are defined in the package comment section.
+
+## A real example of use
+
+This package can be used, for example, to improve methods of updating information. Let's look at the following example:
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+// The defaultEnabled variable is used to set the default value
+// for the Enabled field of the Config struct.
+const defaultEnabled = true
+
+// Config is a some configuration struct.
+type Config struct {
+	Name    string
+	Port    int
+	Eanbled bool
+}
+
+// Service is a some service struct.
+type Service struct {
+	name    string
+	port    int
+	enabled bool
+}
+
+// Configure executes the service configuration without changing
+// the previously set parameters if the value for a specific
+// field is not specified.
+//
+// If the field is left blank, set the default value.
+func (s *Service) Configure(config Config) {
+	// We have no problem determining if the Name field was passed or
+	// if it is empty and we have to set it as the default value.
+	if config.Name != "" {
+		s.name = config.Name
+	}
+
+	if s.name == "" {
+		s.name = "default"
+	}
+
+	// Everything is also fine for the Port parameter.
+	if config.Port != 0 {
+		s.port = config.Port
+	}
+
+	if s.port == 0 {
+		s.port = 8080
+	}
+
+	// PROBLEM HERE:
+	// But with bool the situation is more complicated.
+	// Not sure if we passed False or just left the field blank.
+	// Also, we can't figure out if the field is empty and should
+	// be set by default, or if it's just set to False.
+	if config.Eanbled != false {
+		s.enabled = config.Eanbled
+	}
+
+	if s.enabled == false {
+		s.enabled = defaultEnabled
+	}
+}
+
+func main() {
+	// Default service.
+	s := &Service{}
+	s.Configure(Config{Name: "default", Port: 8081, Eanbled: true})
+	fmt.Println(s) // &{default 8081 true}
+
+	// Change port only.
+	s.Configure(Config{Port: 8082})
+	fmt.Println(s) // &{default 8082 true}
+
+	// PROBLEM HERE:
+	// Change enabled status only.
+	s.Configure(Config{Eanbled: false})
+	fmt.Println(s) // &{default 8082 true}  --- not changed !!!
+
+	// Note:
+	// In this case, you need to write a configurator to which all
+	// configuration fields (or at least bool fields) are always transferred.
+}
+```
+
+As you can see, Boolean logic is not always enough even in such simple tasks.
+
+The following example solves this problem:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/goloop/trit"
+)
+
+// The defaultEnabled variable is used to set the default value
+// for the Enabled field of the Config struct.
+const defaultEnabled = true
+
+// Config is a some configuration struct.
+type Config struct {
+	Name    string
+	Port    int
+	Eanbled trit.Trit // use three-valued logic
+}
+
+// Service is a some service struct.
+type Service struct {
+	name    string
+	port    int
+	enabled trit.Trit // use three-valued logic
+}
+
+// Configure executes the service configuration without changing
+// the previously set parameters if the value for a specific
+// field is not specified.
+//
+// If the field is left blank, set the default value.
+func (s *Service) Configure(config Config) {
+	// ... some code ...
+
+	// Now we can easily determine if a field was passed as
+	// a configuration update and if it is defined.
+	if !config.Eanbled.IsNil() {
+		s.enabled = config.Eanbled
+	}
+
+    // It looks like this: if the trit object is not defined,
+    // set it to the default value, otherwise - do not touch it.
+	trit.Default(&s.enabled, defaultEnabled)
+}
+
+// IsEnabled returns the current status of the service.
+func (s *Service) IsEnabled() bool {
+	return s.enabled.IsTrue()
+}
+
+func main() {
+	// ... some code ...
+
+	// Change enabled status only.
+	s.Configure(Config{Eanbled: -1})
+	fmt.Println(s) // &{default 8082 False} --- now it works !!!
+
+	// Next code outputs: Service is disabled
+	if s.IsEnabled() {
+		fmt.Println("Service is enabled")
+	} else {
+		fmt.Println("Service is disabled")
+	}
+}
+```
+
+This is a very simple and demonstrative example of using three-valued logic in everyday life.
