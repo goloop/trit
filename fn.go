@@ -2,13 +2,15 @@ package trit
 
 import (
 	"reflect"
-
-	"github.com/goloop/g"
 )
 
-// Logicable is a special data type from which to determine the state of trit.
+// Logicable is a special data type from which to determine the state of Trit
+// in the context of three-valued logic.
 type Logicable interface {
-	bool | g.Numerable | Trit
+	bool | Trit |
+		int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 |
+		float32 | float64
 }
 
 // The logicToTrit function converts any logic type to Trit.
