@@ -120,6 +120,90 @@ func TestConvert(t *testing.T) {
 	}
 }
 
+// TestAll tests the All function.
+func TestAll(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []Trit
+		out  Trit
+	}{
+		{"[1, 1, 1] should return True", []Trit{True, True, True}, True},
+		{"[1, 0, 1] should return False", []Trit{True, False, True}, False},
+		{"[0, 0, 0] should return False", []Trit{False, False, False}, False},
+		{"[0, 0, 1] should return False", []Trit{False, False, True}, False},
+		{"[0, 1, 0] should return False", []Trit{False, True, False}, False},
+		{"[0, 1, 1] should return False", []Trit{False, True, True}, False},
+		{"[1, 0, 0] should return False", []Trit{True, False, False}, False},
+		{"[1, 1, 0] should return False", []Trit{True, True, False}, False},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := All(test.in...)
+			if result != test.out {
+				t.Errorf("All did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestAny tests the Any function.
+func TestAny(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []Trit
+		out  Trit
+	}{
+		{"[1, 1, 1] should return True", []Trit{True, True, True}, True},
+		{"[1, 0, 1] should return True", []Trit{True, False, True}, True},
+		{"[0, 0, 0] should return False", []Trit{False, False, False}, False},
+		{"[0, 0, 1] should return True", []Trit{False, False, True}, True},
+		{"[0, 1, 0] should return True", []Trit{False, True, False}, True},
+		{"[0, 1, 1] should return True", []Trit{False, True, True}, True},
+		{"[1, 0, 0] should return True", []Trit{True, False, False}, True},
+		{"[1, 1, 0] should return True", []Trit{True, True, False}, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Any(test.in...)
+			if result != test.out {
+				t.Errorf("Any did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestNone tests the None function.
+func TestNone(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []Trit
+		out  Trit
+	}{
+		{"[1, 1, 1] should return False", []Trit{True, True, True}, False},
+		{"[1, 0, 1] should return False", []Trit{True, False, True}, False},
+		{"[0, 0, 0] should return True", []Trit{False, False, False}, True},
+		{"[0, 0, 1] should return False", []Trit{False, False, True}, False},
+		{"[0, 1, 0] should return False", []Trit{False, True, False}, False},
+		{"[0, 1, 1] should return False", []Trit{False, True, True}, False},
+		{"[1, 0, 0] should return False", []Trit{True, False, False}, False},
+		{"[1, 1, 0] should return False", []Trit{True, True, False}, False},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := None(test.in...)
+			if result != test.out {
+				t.Errorf("None did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
 // TestLogicToTrit tests the logicToTrit function.
 func TestLogicToTrit(t *testing.T) {
 	// Numbers.

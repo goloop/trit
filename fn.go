@@ -124,6 +124,57 @@ func Convert[T Logicable](v T) Trit {
 	return trit
 }
 
+// All returns True if all the trit-objects are True.
+//
+// Example usage:
+//
+//	t := trit.All(trit.True, trit.True, trit.True)
+//	fmt.Println(t.String()) // Output: True
+func All[T Logicable](t ...T) Trit {
+	for _, v := range t {
+		trit := logicToTrit(v)
+		if trit.IsFalse() {
+			return False
+		}
+	}
+
+	return True
+}
+
+// Any returns True if any of the trit-objects are True.
+//
+// Example usage:
+//
+//	t := trit.Any(trit.True, trit.False, trit.False)
+//	fmt.Println(t.String()) // Output: True
+func Any[T Logicable](t ...T) Trit {
+	for _, v := range t {
+		trit := logicToTrit(v)
+		if trit.IsTrue() {
+			return True
+		}
+	}
+
+	return False
+}
+
+// None returns True if none of the trit-objects are True.
+//
+// Example usage:
+//
+//	t := trit.None(trit.False, trit.False, trit.False)
+//	fmt.Println(t.String()) // Output: True
+func None[T Logicable](t ...T) Trit {
+	for _, v := range t {
+		trit := logicToTrit(v)
+		if trit.IsTrue() {
+			return False
+		}
+	}
+
+	return True
+}
+
 // Not performs a logical NOT operation on a Trit-Like value and
 // returns the result as Trit.
 //
