@@ -1,4 +1,4 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/goloop/trit)](https://goreportcard.com/report/github.com/goloop/trit) [![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/trit/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/trit) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
+[![License](https://img.shields.io/badge/license-MIT-brightgreen)](https://github.com/goloop/trit/blob/master/LICENSE) [![License](https://img.shields.io/badge/godoc-YES-green)](https://godoc.org/github.com/goloop/trit) [![Stay with Ukraine](https://img.shields.io/static/v1?label=Stay%20with&message=Ukraine%20♥&color=ffD700&labelColor=0057B8&style=flat)](https://u24.gov.ua/)
 
 
 # trit
@@ -42,15 +42,20 @@ func main() {
 	// IsFalse
 	fmt.Println(t2.IsFalse()) // Output: True
 
-	// Def
+	// Default
 	t3 := trit.Nil
-	t3.Def(trit.True)
+	t3.Default(trit.True)
 	fmt.Println(t3) // Output: True
 
-	// DefTrue
+	// TrueIfNil
 	t4 := trit.Nil
-	t4.DefTrue()
+	t4.TrueIfNil()
 	fmt.Println(t4) // Output: True
+
+	// FalseIfNil
+	t4 = trit.Nil
+	t4.FalseIfNil()
+	fmt.Println(t4) // Output: False
 
 	// And
 	result := t1.And(t2)
@@ -73,7 +78,7 @@ func main() {
 	fmt.Println(result) // Output: False
 
 	// Xnor
-	result = t1.Xnor(t2)
+	result = t1.Nxor(t2)
 	fmt.Println(result) // Output: False
 
 	// Int
@@ -82,7 +87,6 @@ func main() {
 	// String
 	fmt.Println(t1.String()) // Output: True
 }
-
 ```
 
 ## Truth Tables
