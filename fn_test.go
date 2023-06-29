@@ -801,3 +801,48 @@ func TestNeq(t *testing.T) {
 		})
 	}
 }
+
+// TestConfidence tests the Confidence function.
+func TestConfidence(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []Trit
+		out  bool
+	}{
+		{
+			name: "Confidence should return true for (True, True, True)",
+			in:   []Trit{True, True, True},
+			out:  true,
+		},
+		{
+			name: "Confidence should return true for (True, True, False)",
+			in:   []Trit{True, True, False},
+			out:  true,
+		},
+		{
+			name: "Confidence should return true for (False, False, False)",
+			in:   []Trit{False, False, False},
+			out:  true,
+		},
+		{
+			name: "Confidence should return false for (False, Unknown, True)",
+			in:   []Trit{False, Unknown, True},
+			out:  false,
+		},
+		{
+			name: "Confidence should return false for (Unknown, Unknown)",
+			in:   []Trit{Unknown, Unknown},
+			out:  false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Confidence(test.in...)
+			if result != test.out {
+				t.Errorf("Confidence did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
