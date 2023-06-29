@@ -333,17 +333,17 @@ func Neq[T, U Logicable](a T, b U) Trit {
 	return ta.Neq(tb)
 }
 
-// Confidence returns boolean true if all Trit-Like values has definiteness,
+// IsConfidence returns boolean true if all Trit-Like values has definiteness,
 // i.e. is either True or False.
 //
 // Example usage:
 //
-//	a := trit.Confidence(trit.True, trit.False, trit.Unknown)
+//	a := trit.IsConfidence(trit.True, trit.False, trit.Unknown)
 //	fmt.Println(a.String()) // Output: False
 //
-//	b := trit.Confidence(trit.True, trit.True, trit.False)
+//	b := trit.IsConfidence(trit.True, trit.True, trit.False)
 //	fmt.Println(b.String()) // Output: True
-func Confidence[T Logicable](ts ...T) bool {
+func IsConfidence[T Logicable](ts ...T) bool {
 	for _, t := range ts {
 		trit := logicToTrit(t)
 		if trit == Unknown {

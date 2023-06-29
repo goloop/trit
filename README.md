@@ -183,17 +183,17 @@ Here's an explanation of some key parts of this package:
 
   - The Trit type is used to represent a "trinary digit," which can take on three states: False, Unknown, and True.
 
-  - Package defineds various methods on the Trit type that allow you to perform operations on trinary digits, including determining if a trinary digit represents False, Unknown, or True, setting the value of a trinary digit based on an integer, normalizing a trinary digit, converting a trinary digit to an integer or a string, and performing logical NOT, AND, OR, XOR, NAND, NOR, and XNOR operations on trinary digits.
+  - Package defineds various methods on the Trit type that allow you to perform operations on trinary digits, including determining if a trinary digit represents False, Unknown, or True, setting the value of a trinary digit based on an integer, normalizing a trinary digit, converting a trinary digit to an integer or a string.
 
   - The Trit type is defined as an alias for int8, and it can take one of three constants as its value: False, Unknown, or True. False corresponds to any negative number (including -1), Unknown corresponds to 0, and True corresponds to any positive number (including 1).
 
-  - There are four methods (Def, DefTrue, DefFalse, and Clean) that check if the value of a Trit is Unknown and change its value based on the method called. For instance, DefTrue will set the Trit to True if its current value is Unknown.
+  - Provides methods default state (like Default, TrueIfUnknown, FalseIFUnknown etc.,) that check if the value of a Trit is Unknown and change its value based on the method called. For instance, TrueIfUnknown will set the Trit to True if its current value is Unknown.
 
-  - There are three methods (IsFalse, IsUnknown, and IsTrue) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
+  - There are some methods (like IsFalse, IsUnknown, IsTrue, IsConfidence etc.,) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
 
-  - These methods perform various operations like assigning a value to a Trit (Set), returning the normalized value of a Trit (Val), normalizing the Trit in place (Norm), getting the integer representation of the Trit (Int), and getting the string representation of the Trit (String).
+  - Some methods perform various operations like assigning a value to a Trit (Set), returning the normalized value of a Trit (Val), normalizing the Trit in place (Norm), getting the integer representation of the Trit (Int), and getting the string representation of the Trit (String).
 
-  - There are several methods for performing logic operations on Trit values including Not, And, Or, Xor, Nand, and Nor. These methods implement trinary logic versions of their respective boolean logic operations.
+  - There are several methods for performing logic operations on Trit values including Not, And, Or, Xor, Nand,  Nor etc. These methods implement trinary logic versions of their respective boolean logic operations.
 
   - The logic operation methods follow truth tables for ternary logic which are defined in the package comment section.
 
