@@ -97,8 +97,8 @@ func TestSet(t *testing.T) {
 	}
 }
 
-// TestAny tests the Any function.
-func TestAny(t *testing.T) {
+// TestConvert tests the Convert function.
+func TestConvert(t *testing.T) {
 	tests := []struct {
 		name string
 		in   float64
@@ -111,7 +111,7 @@ func TestAny(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := Any(test.in)
+			result := Convert(test.in)
 			if result != test.out {
 				t.Errorf("Any did not return %v for %v",
 					test.out, test.in)

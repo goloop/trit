@@ -113,13 +113,13 @@ func Set[T Logicable](t *Trit, v T) Trit {
 	return *t
 }
 
-// Any converts the any Logicable type to Trit.
+// Convert converts the any Logicable type to Trit.
 //
 // Example usage:
 //
-//	t := trit.Any(true)
+//	t := trit.Convert(true)
 //	fmt.Println(t.String()) // Output: True
-func Any[T Logicable](v T) Trit {
+func Convert[T Logicable](v T) Trit {
 	trit := logicToTrit(v)
 	return trit
 }
