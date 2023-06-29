@@ -76,8 +76,6 @@
 //	 T | T |  T        T | T |  T        T | T |  T
 package trit
 
-import "reflect"
-
 // Trit represents a trinary digit, which can take on three distinct
 // states: False, Nil, or True. This type is a fundamental unit of
 // trinary or ternary logic systems, including trinary computers and
@@ -105,67 +103,15 @@ const (
 	True Trit = 1
 )
 
-// Logic is a special data type from which to determine the state of trit.
-type Logic interface {
-	bool | int | int8 | int16 | int32 | int64 | Trit
-}
-
-// The logicToTrit function converts any logic type to Trit object.
-func logicToTrit[T Logic](v T) Trit {
-	switch any(v).(type) {
-	case bool:
-		if any(v).(bool) {
-			return True
-		}
-		return False
-	case int, int8, int16, int32, int64:
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16,
-			reflect.Int32, reflect.Int64:
-			intValue := reflect.ValueOf(v).Int()
-			if intValue > 0 {
-				return True
-			} else if intValue < 0 {
-				return False
-			}
-
-			return Nil
-		}
-	case Trit:
-		return any(v).(Trit)
-	}
-
-	return Nil
-}
-
-// Default sets the default value for the trit-object
-// if this one has a Nil state.
-//
-// Example usage:
-//
-//	t := trit.Nil
-//	trit.Default(&t, trit.True)
-//	fmt.Println(t.String()) // Output: True
-func Default[T Logic](t *Trit, v T) Trit {
-	// If the trit is not Nil, return the trit.
-	if t.Val() != Nil {
-		return *t
-	}
-
-	trit := logicToTrit(v)
-	*t = trit
-	return *t
-}
-
-// Def is a method that checks if the value of the Trit is Nil.
+// Default is a method that checks if the value of the Trit is Nil.
 // If it is, it sets the Trit to the given Trit argument.
 //
 // Example usage:
 //
 //	t := trit.Nil
-//	t.Def(trit.True)
+//	t.Default(trit.True)
 //	fmt.Println(t.String()) // Output: True
-func (t *Trit) Def(trit Trit) Trit {
+func (t *Trit) Default(trit Trit) Trit {
 	if t.Val() == Nil {
 		*t = trit
 	}
