@@ -5,11 +5,11 @@
 
 It's useful package for working with trinary logic in Go!
 
-Package defines the data type and basic operations of a ternary logic system, often referred to as trinary or ternary logic. It supports three states, namely False, Nil, and True, with False represented by  negative number (-1), Nil represented by zero (0), and True represented by positive number (1).
+Package defines the data type and basic operations of a ternary logic system, often referred to as trinary or ternary logic. It supports three states, namely False, Unknown, and True, with False represented by  negative number (-1), Unknown represented by zero (0), and True represented by positive number (1).
 
 The logic operations NOT, AND, OR, XOR, NAND, NOR, and XNOR are implemented as methods of the Trit type, with each method applying the logic operation on the Trit receiver and a Trit argument to produce a Trit result according to the trinary truth table.
 
-There are also some useful methods provided for checking the state of a Trit value (IsFalse, IsNil, IsTrue), setting a Trit value from an integer (Set), returning the underlying int8 value of a Trit (Int), and returning a string representation of a Trit value (String).
+There are also some useful methods provided for checking the state of a Trit value (IsFalse, IsUnknown, IsTrue), setting a Trit value from an integer (Set), returning the underlying int8 value of a Trit (Int), and returning a string representation of a Trit value (String).
 
 Overall, this package can be beneficial in scenarios where a "maybe" or "unknown" state is needed, such as in database systems and logic circuits, and in the construction of trinary computers and balanced ternary systems.
 
@@ -43,18 +43,18 @@ func main() {
 	fmt.Println(t2.IsFalse()) // Output: True
 
 	// Default
-	t3 := trit.Nil
+	t3 := trit.Unknown
 	t3.Default(trit.True)
 	fmt.Println(t3) // Output: True
 
-	// TrueIfNil
-	t4 := trit.Nil
-	t4.TrueIfNil()
+	// TrueIfUnknown
+	t4 := trit.Unknown
+	t4.TrueIfUnknown()
 	fmt.Println(t4) // Output: True
 
-	// FalseIfNil
-	t4 = trit.Nil
-	t4.FalseIfNil()
+	// FalseIfUnknown
+	t4 = trit.Unknown
+	t4.FalseIfUnknown()
 	fmt.Println(t4) // Output: False
 
 	// And
@@ -95,69 +95,67 @@ The truth table for the three-valued logic system is shown here. It's a mathemat
 
 ```shell
  Truth Tables of Three-valued logic
- (T=True, N=Nil, F=False)
+ (T=True, N=Unknown, F=False)
 
-	NA   - Not
-	MA   - Modus Ponens Absorption
-	LA   - Law of Absorption
-	IA   - Implication Absorption
+ NA   - Not
+ MA   - Modus Ponens Absorption
+ LA   - Law of Absorption
+ IA   - Implication Absorption
 
-	AND  - Logical AND
-	OR   - Logical OR
-	XOR  - Exclusive OR
+ AND  - Logical AND
+ OR   - Logical OR
+ XOR  - Exclusive OR
 
-	NAND - Logical not AND
-	NOR  - Logical not OR
-	NXOR - Logical not XOR
+ NAND - Logical not AND
+ NOR  - Logical not OR
+ NXOR - Logical not XOR
 
-	IMP  - Implication in Lukasevich's Logic
-	MIN  - Minimum
-	MAX  - Maximum
+ IMP  - Implication in Lukasevich's Logic
+ MIN  - Minimum
+ MAX  - Maximum
 
-	 A  | NA      A  | MA      A  | LA      A  | IA
-	----+----    ----+----    ----+----    ----+----
-	 F  |  T      F  |  F      F  |  F      F  |  F
-	 N  |  N      N  |  T      N  |  F      N  |  T
-	 T  |  F      T  |  T      T  |  T      T  |  F
+  A  | NA      A  | MA      A  | LA      A  | IA
+ ----+----    ----+----    ----+----    ----+----
+  F  |  T      F  |  F      F  |  F      F  |  F
+  U  |  U      U  |  T      U  |  F      U  |  T
+  T  |  F      T  |  T      T  |  T      T  |  F
 
-
-	 A | B | AND       A | B |  OR       A | B | XOR
-	---+---+------    ---+---+------    ---+---+------
-	 F | F |  F        F | F |  F        F | F |  F
-	 F | N |  F        F | N |  N        F | N |  N
-	 F | T |  F        F | T |  T        F | T |  T
-	 N | F |  F        N | F |  N        N | F |  N
-	 N | N |  N        N | N |  N        N | N |  N
-	 N | T |  N        N | T |  T        N | T |  N
-	 T | F |  F        T | F |  T        T | F |  T
-	 T | N |  N        T | N |  T        T | N |  N
-	 T | T |  T        T | T |  T        T | T |  F
-
-
-	 A | B | NAND      A | B | NOR       A | B | NXOR
-	---+---+------    ---+---+------    ---+---+------
-	 F | F |  T        F | F |  T        F | F |  T
-	 F | N |  T        F | N |  N        F | N |  N
-	 F | T |  T        F | T |  F        F | T |  F
-	 N | F |  T        N | F |  N        N | F |  N
-	 N | N |  N        N | N |  N        N | N |  N
-	 N | T |  N        N | T |  F        N | T |  N
-	 T | F |  T        T | F |  F        T | F |  F
-	 T | N |  N        T | N |  F        T | N |  N
-	 T | T |  F        T | T |  F        T | T |  T
+  A | B | AND       A | B |  OR       A | B | XOR
+ ---+---+------    ---+---+------    ---+---+------
+  F | F |  F        F | F |  F        F | F |  F
+  F | U |  F        F | U |  U        F | U |  U
+  F | T |  F        F | T |  T        F | T |  T
+  U | F |  F        U | F |  U        U | F |  U
+  U | U |  U        U | U |  U        U | U |  U
+  U | T |  U        U | T |  T        U | T |  U
+  T | F |  F        T | F |  T        T | F |  T
+  T | U |  U        T | U |  T        T | U |  U
+  T | T |  T        T | T |  T        T | T |  F
 
 
-	 A | B | IMP       A | B | MIN       A | B | MAX
-	---+---+------    ---+---+------    ---+---+------
-	 F | F |  T        F | F |  F        F | F |  F
-	 F | N |  T        F | N |  F        F | N |  N
-	 F | T |  T        F | T |  F        F | T |  T
-	 N | F |  N        N | F |  F        N | F |  N
-	 N | N |  T        N | N |  N        N | N |  N
-	 N | T |  T        N | T |  N        N | T |  T
-	 T | F |  F        T | F |  F        T | F |  T
-	 T | N |  N        T | N |  N        T | N |  T
-	 T | T |  T        T | T |  T        T | T |  T
+  A | B | NAND      A | B | NOR       A | B | NXOR
+ ---+---+------    ---+---+------    ---+---+------
+  F | F |  T        F | F |  T        F | F |  T
+  F | U |  T        F | U |  U        F | U |  U
+  F | T |  T        F | T |  F        F | T |  F
+  U | F |  T        U | F |  U        U | F |  U
+  U | U |  U        U | U |  U        U | U |  U
+  U | T |  U        U | T |  F        U | T |  U
+  T | F |  T        T | F |  F        T | F |  F
+  T | U |  U        T | U |  F        T | U |  U
+  T | T |  F        T | T |  F        T | T |  T
+
+  A | B | IMP       A | B | MIN       A | B | MAX
+ ---+---+------    ---+---+------    ---+---+------
+  F | F |  T        F | F |  F        F | F |  F
+  F | U |  T        F | U |  F        F | U |  U
+  F | T |  T        F | T |  F        F | T |  T
+  U | F |  U        U | F |  F        U | F |  U
+  U | U |  T        U | U |  U        U | U |  U
+  U | T |  T        U | T |  U        U | T |  T
+  T | F |  F        T | F |  F        T | F |  T
+  T | U |  U        T | U |  U        T | U |  T
+  T | T |  T        T | T |  T        T | T |  T
 ```
 
 ## Explanation
@@ -166,15 +164,15 @@ Here's an explanation of some key parts of this package:
 
   - The Trit type is defined as an int8. This is a signed 8-bit integer, which means it can hold values between -128 and 127.
 
-  - The Trit type is used to represent a "trinary digit," which can take on three states: False, Nil, and True.
+  - The Trit type is used to represent a "trinary digit," which can take on three states: False, Unknown, and True.
 
-  - Package defineds various methods on the Trit type that allow you to perform operations on trinary digits, including determining if a trinary digit represents False, Nil, or True, setting the value of a trinary digit based on an integer, normalizing a trinary digit, converting a trinary digit to an integer or a string, and performing logical NOT, AND, OR, XOR, NAND, NOR, and XNOR operations on trinary digits.
+  - Package defineds various methods on the Trit type that allow you to perform operations on trinary digits, including determining if a trinary digit represents False, Unknown, or True, setting the value of a trinary digit based on an integer, normalizing a trinary digit, converting a trinary digit to an integer or a string, and performing logical NOT, AND, OR, XOR, NAND, NOR, and XNOR operations on trinary digits.
 
-  - The Trit type is defined as an alias for int8, and it can take one of three constants as its value: False, Nil, or True. False corresponds to any negative number (including -1), Nil corresponds to 0, and True corresponds to any positive number (including 1).
+  - The Trit type is defined as an alias for int8, and it can take one of three constants as its value: False, Unknown, or True. False corresponds to any negative number (including -1), Unknown corresponds to 0, and True corresponds to any positive number (including 1).
 
-  - There are four methods (Def, DefTrue, DefFalse, and Clean) that check if the value of a Trit is Nil and change its value based on the method called. For instance, DefTrue will set the Trit to True if its current value is Nil.
+  - There are four methods (Def, DefTrue, DefFalse, and Clean) that check if the value of a Trit is Unknown and change its value based on the method called. For instance, DefTrue will set the Trit to True if its current value is Unknown.
 
-  - There are three methods (IsFalse, IsNil, and IsTrue) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
+  - There are three methods (IsFalse, IsUnknown, and IsTrue) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
 
   - These methods perform various operations like assigning a value to a Trit (Set), returning the normalized value of a Trit (Val), normalizing the Trit in place (Norm), getting the integer representation of the Trit (Int), and getting the string representation of the Trit (String).
 
@@ -312,7 +310,7 @@ func (s *Service) Configure(config Config) {
 
 	// Now we can easily determine if a field was passed as
 	// a configuration update and if it is defined.
-	if !config.Eanbled.IsNil() {
+	if !config.Eanbled.IsUnknown() {
 		s.enabled = config.Eanbled
 	}
 

@@ -4,108 +4,108 @@ import "testing"
 
 // TestMethodDefault tests the Default method.
 func TestMethodDefault(t *testing.T) {
-	t.Run("Def should update Nil to True", func(t *testing.T) {
-		t1 := Nil
+	t.Run("Def should update Unknown to True", func(t *testing.T) {
+		t1 := Unknown
 		result := t1.Default(True)
 		if result != True {
-			t.Errorf("Def did not update Nil to True")
+			t.Errorf("Did not update Unknown to True")
 		}
 	})
 
-	t.Run("Def should update Nil to False", func(t *testing.T) {
-		t1 := Nil
+	t.Run("Def should update Unknown to False", func(t *testing.T) {
+		t1 := Unknown
 		result := t1.Default(False)
 		if result != False {
-			t.Errorf("Def did not update Nil to False")
+			t.Errorf("Def did not update Unknown to False")
 		}
 	})
 
-	t.Run("Def should not update non-Nil Trit", func(t *testing.T) {
+	t.Run("Def should not update non-Unknown Trit", func(t *testing.T) {
 		t1 := True
 		result := t1.Default(False)
 		if result != True {
-			t.Errorf("Def updated non-Nil Trit")
+			t.Errorf("Def updated non-Unknown Trit")
 		}
 	})
 }
 
-// TestTrueIfNil tests the TrueIfNil method.
-func TestTrueIfNil(t *testing.T) {
-	t.Run("Should set Nil to True", func(t *testing.T) {
-		tr := Nil
-		tr.TrueIfNil()
+// TestTrueIfUnknown tests the TrueIfUnknown method.
+func TestTrueIfUnknown(t *testing.T) {
+	t.Run("Should set Unknown to True", func(t *testing.T) {
+		tr := Unknown
+		tr.TrueIfUnknown()
 		if tr != True {
-			t.Errorf("TrueIfNil did not set Nil to True")
+			t.Errorf("TrueIfUnknown did not set Unknown to True")
 		}
 	})
 
 	t.Run("Should not change True to False", func(t *testing.T) {
 		tr := True
-		tr.TrueIfNil()
+		tr.TrueIfUnknown()
 		if tr != True {
-			t.Errorf("TrueIfNil changed True to False")
+			t.Errorf("TrueIfUnknown changed True to False")
 		}
 	})
 
 	t.Run("Should not change False to True", func(t *testing.T) {
 		tr := False
-		tr.TrueIfNil()
+		tr.TrueIfUnknown()
 		if tr != False {
-			t.Errorf("TrueIfNil changed False to True")
+			t.Errorf("TrueIfUnknown changed False to True")
 		}
 	})
 }
 
-// TestFalseIfNil tests the FalseIfNil method.
-func TestFalseIfNil(t *testing.T) {
-	t.Run("Should set Nil to False", func(t *testing.T) {
-		tr := Nil
-		tr.FalseIfNil()
+// TestFalseIfUnknown tests the FalseIfUnknown method.
+func TestFalseIfUnknown(t *testing.T) {
+	t.Run("Should set Unknown to False", func(t *testing.T) {
+		tr := Unknown
+		tr.FalseIfUnknown()
 		if tr != False {
-			t.Errorf("FalseIfNil did not set Nil to False")
+			t.Errorf("FalseIfUnknown did not set Unknown to False")
 		}
 	})
 
 	t.Run("Should not change False to True", func(t *testing.T) {
 		tr := False
-		tr.FalseIfNil()
+		tr.FalseIfUnknown()
 		if tr != False {
-			t.Errorf("FalseIfNil changed False to True")
+			t.Errorf("FalseIfUnknown changed False to True")
 		}
 	})
 
 	t.Run("Should not change True to False", func(t *testing.T) {
 		tr := True
-		tr.FalseIfNil()
+		tr.FalseIfUnknown()
 		if tr != True {
-			t.Errorf("FalseIfNil changed True to False")
+			t.Errorf("FalseIfUnknown changed True to False")
 		}
 	})
 }
 
 // TestClean tests the Clean method.
 func TestClean(t *testing.T) {
-	t.Run("Clean should set Nil to Nil", func(t *testing.T) {
-		tr := Nil
+	t.Run("Clean should set Unknown to Unknown", func(t *testing.T) {
+		tr := Unknown
 		tr.Clean()
-		if tr != Nil {
-			t.Errorf("Clean did not set Nil to Nil")
+		if tr != Unknown {
+			t.Errorf("Clean did not set Unknown to Unknown")
 		}
 	})
 
-	t.Run("Clean should not change False to Nil", func(t *testing.T) {
+	t.Run("Clean should not change False to Unknown", func(t *testing.T) {
 		tr := False
 		tr.Clean()
 		if tr != False {
-			t.Errorf("Clean changed False to Nil")
+			t.Errorf("Clean changed False to Unknown")
 		}
 	})
 
-	t.Run("Clean should not change True to Nil", func(t *testing.T) {
+	t.Run("Clean should not change True to Unknown", func(t *testing.T) {
 		tr := True
 		tr.Clean()
 		if tr != True {
-			t.Errorf("Clean changed True to Nil")
+			t.Errorf("Clean changed True to Unknown")
 		}
 	})
 }
@@ -119,10 +119,10 @@ func TestMethodIsFalse(t *testing.T) {
 		}
 	})
 
-	t.Run("IsFalse should return false for Nil", func(t *testing.T) {
-		tr := Nil
+	t.Run("IsFalse should return false for Unknown", func(t *testing.T) {
+		tr := Unknown
 		if tr.IsFalse() {
-			t.Errorf("IsFalse returned true for Nil")
+			t.Errorf("IsFalse returned true for Unknown")
 		}
 	})
 
@@ -134,26 +134,26 @@ func TestMethodIsFalse(t *testing.T) {
 	})
 }
 
-// TestMethodIsNil tests the IsNil method.
-func TestMethodIsNil(t *testing.T) {
-	t.Run("IsNil should return false for False", func(t *testing.T) {
+// TestMethodIsUnknown tests the IsUnknown method.
+func TestMethodIsUnknown(t *testing.T) {
+	t.Run("IsUnknown should return false for False", func(t *testing.T) {
 		tr := False
-		if tr.IsNil() {
-			t.Errorf("IsNil returned true for False")
+		if tr.IsUnknown() {
+			t.Errorf("IsUnknown returned true for False")
 		}
 	})
 
-	t.Run("IsNil should return true for Nil", func(t *testing.T) {
-		tr := Nil
-		if !tr.IsNil() {
-			t.Errorf("IsNil returned false for Nil")
+	t.Run("IsUnknown should return true for Unknown", func(t *testing.T) {
+		tr := Unknown
+		if !tr.IsUnknown() {
+			t.Errorf("IsUnknown returned false for Unknown")
 		}
 	})
 
-	t.Run("IsNil should return false for True", func(t *testing.T) {
+	t.Run("IsUnknown should return false for True", func(t *testing.T) {
 		tr := True
-		if tr.IsNil() {
-			t.Errorf("IsNil returned true for True")
+		if tr.IsUnknown() {
+			t.Errorf("IsUnknown returned true for True")
 		}
 	})
 }
@@ -167,10 +167,10 @@ func TestMethodIsTrue(t *testing.T) {
 		}
 	})
 
-	t.Run("IsTrue should return false for Nil", func(t *testing.T) {
-		tr := Nil
+	t.Run("IsTrue should return false for Unknown", func(t *testing.T) {
+		tr := Unknown
 		if tr.IsTrue() {
-			t.Errorf("IsTrue returned true for Nil")
+			t.Errorf("IsTrue returned true for Unknown")
 		}
 	})
 
@@ -192,11 +192,11 @@ func TestMethodSet(t *testing.T) {
 		}
 	})
 
-	t.Run("Set should set value to Nil for zero", func(t *testing.T) {
+	t.Run("Set should set value to Unknown for zero", func(t *testing.T) {
 		tr := Trit(1)
 		tr.Set(0)
-		if tr != Nil {
-			t.Errorf("Set did not set value to Nil for zero")
+		if tr != Unknown {
+			t.Errorf("Set did not set value to Unknown for zero")
 		}
 	})
 
@@ -218,10 +218,10 @@ func TestVal(t *testing.T) {
 		}
 	})
 
-	t.Run("Val should return Nil for zero Trit", func(t *testing.T) {
+	t.Run("Val should return Unknown for zero Trit", func(t *testing.T) {
 		tr := Trit(0)
-		if tr.Val() != Nil {
-			t.Errorf("Val did not return Nil for zero Trit")
+		if tr.Val() != Unknown {
+			t.Errorf("Val did not return Unknown for zero Trit")
 		}
 	})
 
@@ -243,11 +243,11 @@ func TestNorm(t *testing.T) {
 		}
 	})
 
-	t.Run("Norm should normalize Nil to Nil", func(t *testing.T) {
-		tr := Nil
+	t.Run("Norm should normalize Unknown to Unknown", func(t *testing.T) {
+		tr := Unknown
 		tr.Norm()
-		if tr != Nil {
-			t.Errorf("Norm did not normalize Nil to Nil")
+		if tr != Unknown {
+			t.Errorf("Norm did not normalize Unknown to Unknown")
 		}
 	})
 
@@ -269,10 +269,10 @@ func TestInt(t *testing.T) {
 		}
 	})
 
-	t.Run("Int should return 0 for Nil", func(t *testing.T) {
-		tr := Nil
+	t.Run("Int should return 0 for Unknown", func(t *testing.T) {
+		tr := Unknown
 		if tr.Int() != 0 {
-			t.Errorf("Int did not return 0 for Nil")
+			t.Errorf("Int did not return 0 for Unknown")
 		}
 	})
 
@@ -293,10 +293,10 @@ func TestString(t *testing.T) {
 		}
 	})
 
-	t.Run("String should return 'Nil' for Nil", func(t *testing.T) {
-		tr := Nil
-		if tr.String() != "Nil" {
-			t.Errorf("String did not return 'Nil' for Nil")
+	t.Run("String should return 'Unknown' for Unknown", func(t *testing.T) {
+		tr := Unknown
+		if tr.String() != "Unknown" {
+			t.Errorf("String did not return 'Unknown' for Unknown")
 		}
 	})
 
@@ -316,7 +316,7 @@ func TestMethodNot(t *testing.T) {
 		out  Trit
 	}{
 		{"Not should return True for False", False, True},
-		{"Not should return Nil for Nil", Nil, Nil},
+		{"Not should return Unknown for Unknown", Unknown, Unknown},
 		{"Not should return False for True", True, False},
 	}
 
@@ -338,7 +338,7 @@ func TestMethodMa(t *testing.T) {
 		out  Trit
 	}{
 		{"Ma should return False for False", False, False},
-		{"Ma should return True for Nil", Nil, True},
+		{"Ma should return True for Unknown", Unknown, True},
 		{"Ma should return True for True", True, True},
 	}
 
@@ -360,7 +360,7 @@ func TestMethodLa(t *testing.T) {
 		out  Trit
 	}{
 		{"La should return False for False", False, False},
-		{"La should return False for Nil", Nil, False},
+		{"La should return False for Unknown", Unknown, False},
 		{"La should return True for True", True, True},
 	}
 
@@ -382,7 +382,7 @@ func TestMethodIa(t *testing.T) {
 		out  Trit
 	}{
 		{"Ia should return False for False", False, False},
-		{"Ia should return True for Nil", Nil, True},
+		{"Ia should return True for Unknown", Unknown, True},
 		{"Ia should return False for True", True, False},
 	}
 
@@ -405,13 +405,13 @@ func TestMethodAnd(t *testing.T) {
 		out  Trit
 	}{
 		{"And should return False for (False, False)", False, False, False},
-		{"And should return False for (False, Nil)", False, Nil, False},
+		{"And should return False for (False, Unknown)", False, Unknown, False},
 		{"And should return False for (False, True)", False, True, False},
-		{"And should return False for (Nil, False)", Nil, False, False},
-		{"And should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"And should return Nil for (Nil, True)", Nil, True, Nil},
+		{"And should return False for (Unknown, False)", Unknown, False, False},
+		{"And should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"And should return Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"And should return False for (True, False)", True, False, False},
-		{"And should return Nil for (True, Nil)", True, Nil, Nil},
+		{"And should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"And should return True for (True, True)", True, True, True},
 	}
 
@@ -434,13 +434,13 @@ func TestMethodOr(t *testing.T) {
 		out  Trit
 	}{
 		{"Or should return False for (False, False)", False, False, False},
-		{"Or should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Or should return Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Or should return True for (False, True)", False, True, True},
-		{"Or should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Or should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Or should return True for (Nil, True)", Nil, True, True},
+		{"Or should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Or should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Or should return True for (Unknown, True)", Unknown, True, True},
 		{"Or should return True for (True, False)", True, False, True},
-		{"Or should return True for (True, Nil)", True, Nil, True},
+		{"Or should return True for (True, Unknown)", True, Unknown, True},
 		{"Or should return True for (True, True)", True, True, True},
 	}
 
@@ -463,13 +463,13 @@ func TestMethodXor(t *testing.T) {
 		out  Trit
 	}{
 		{"Xor should return False for (False, False)", False, False, False},
-		{"Xor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Xor should return Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Xor should return True for (False, True)", False, True, True},
-		{"Xor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Xor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Xor should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Xor should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Xor should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Xor should return Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Xor should return True for (True, False)", True, False, True},
-		{"Xor should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Xor should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"Xor should return False for (True, True)", True, True, False},
 	}
 
@@ -492,13 +492,13 @@ func TestMethodNand(t *testing.T) {
 		out  Trit
 	}{
 		{"Nand should return True for (False, False)", False, False, True},
-		{"Nand should return True for (False, Nil)", False, Nil, True},
+		{"Nand should return True for (False, Unknown)", False, Unknown, True},
 		{"Nand should return True for (False, True)", False, True, True},
-		{"Nand should return True for (Nil, False)", Nil, False, True},
-		{"Nand should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nand should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Nand should return True for (Unknown, False)", Unknown, False, True},
+		{"Nand should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Nand should return Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Nand should return True for (True, False)", True, False, True},
-		{"Nand should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Nand should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"Nand should return False for (True, True)", True, True, False},
 	}
 
@@ -521,13 +521,13 @@ func TestMethodNor(t *testing.T) {
 		out  Trit
 	}{
 		{"Nor should return True for (False, False)", False, False, True},
-		{"Nor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Nor should return Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Nor should return False for (False, True)", False, True, False},
-		{"Nor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Nor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nor should return False for (Nil, True)", Nil, True, False},
+		{"Nor should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Nor should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Nor should return False for (Unknown, True)", Unknown, True, False},
 		{"Nor should return False for (True, False)", True, False, False},
-		{"Nor should return False for (True, Nil)", True, Nil, False},
+		{"Nor should return False for (True, Unknown)", True, Unknown, False},
 		{"Nor should return False for (True, True)", True, True, False},
 	}
 
@@ -550,13 +550,13 @@ func TestMethodNxor(t *testing.T) {
 		out  Trit
 	}{
 		{"Nxor should return True for (False, False)", False, False, True},
-		{"Nxor should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Nxor should return Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Nxor should return False for (False, True)", False, True, False},
-		{"Nxor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Nxor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nxor should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Nxor should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Nxor should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Nxor should return Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Nxor should return False for (True, False)", True, False, False},
-		{"Nxor should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Nxor should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"Nxor should return True for (True, True)", True, True, True},
 	}
 
@@ -579,13 +579,13 @@ func TestMethodMin(t *testing.T) {
 		out  Trit
 	}{
 		{"Min should return False for (False, False)", False, False, False},
-		{"Min should return False for (False, Nil)", False, Nil, False},
+		{"Min should return False for (False, Unknown)", False, Unknown, False},
 		{"Min should return False for (False, True)", False, True, False},
-		{"Min should return False for (Nil, False)", Nil, False, False},
-		{"Min should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Min should return Nil for (Nil, True)", Nil, True, Nil},
+		{"Min should return False for (Unknown, False)", Unknown, False, False},
+		{"Min should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Min should return Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Min should return False for (True, False)", True, False, False},
-		{"Min should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Min should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"Min should return True for (True, True)", True, True, True},
 	}
 
@@ -608,13 +608,13 @@ func TestMethodMax(t *testing.T) {
 		out  Trit
 	}{
 		{"Max should return False for (False, False)", False, False, False},
-		{"Max should return Nil for (False, Nil)", False, Nil, Nil},
+		{"Max should return Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Max should return True for (False, True)", False, True, True},
-		{"Max should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Max should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Max should return True for (Nil, True)", Nil, True, True},
+		{"Max should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Max should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Max should return True for (Unknown, True)", Unknown, True, True},
 		{"Max should return True for (True, False)", True, False, True},
-		{"Max should return True for (True, Nil)", True, Nil, True},
+		{"Max should return True for (True, Unknown)", True, Unknown, True},
 		{"Max should return True for (True, True)", True, True, True},
 	}
 
@@ -637,13 +637,13 @@ func TestMethodImp(t *testing.T) {
 		out  Trit
 	}{
 		{"Imp should return True for (False, False)", False, False, True},
-		{"Imp should return True for (False, Nil)", False, Nil, True},
+		{"Imp should return True for (False, Unknown)", False, Unknown, True},
 		{"Imp should return True for (False, True)", False, True, True},
-		{"Imp should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Imp should return True for (Nil, Nil)", Nil, Nil, True},
-		{"Imp should return True for (Nil, True)", Nil, True, True},
+		{"Imp should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Imp should return True for (Unknown, Unknown)", Unknown, Unknown, True},
+		{"Imp should return True for (Unknown, True)", Unknown, True, True},
 		{"Imp should return False for (True, False)", True, False, False},
-		{"Imp should return Nil for (True, Nil)", True, Nil, Nil},
+		{"Imp should return Unknown for (True, Unknown)", True, Unknown, Unknown},
 		{"Imp should return True for (True, True)", True, True, True},
 	}
 

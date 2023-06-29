@@ -30,7 +30,7 @@ func logicToTrit[T Logicable](v T) Trit {
 				return False
 			}
 
-			return Nil
+			return Unknown
 		}
 	case uint, uint8, uint16, uint32, uint64:
 		switch reflect.TypeOf(v).Kind() {
@@ -42,7 +42,7 @@ func logicToTrit[T Logicable](v T) Trit {
 			}
 
 			// Can't be less than 0
-			return Nil
+			return Unknown
 		}
 	case float32, float64:
 		switch reflect.TypeOf(v).Kind() {
@@ -54,7 +54,7 @@ func logicToTrit[T Logicable](v T) Trit {
 				return False
 			}
 
-			return Nil
+			return Unknown
 		}
 	}
 
@@ -62,16 +62,16 @@ func logicToTrit[T Logicable](v T) Trit {
 }
 
 // Default sets the default value for the trit-object
-// if this one has a Nil state.
+// if this one has a Unknown state.
 //
 // Example usage:
 //
-//	t := trit.Nil
+//	t := trit.Unknown
 //	trit.Default(&t, trit.True)
 //	fmt.Println(t.String()) // Output: True
 func Default[T Logicable](t *Trit, v T) Trit {
-	// If the trit is not Nil, return the trit.
-	if t.Val() != Nil {
+	// If the trit is not Unknown, return the trit.
+	if t.Val() != Unknown {
 		return *t
 	}
 
@@ -88,12 +88,12 @@ func IsFalse[T Logicable](t T) bool {
 	return trit.IsFalse()
 }
 
-// IsNil checks if the trit-object is Nil.
+// IsUnknown checks if the trit-object is Unknown.
 //
-// See Trit.IsNil() for more information.
-func IsNil[T Logicable](t T) bool {
+// See Trit.IsUnknown() for more information.
+func IsUnknown[T Logicable](t T) bool {
 	trit := logicToTrit(t)
-	return trit.IsNil()
+	return trit.IsUnknown()
 }
 
 // IsTrue checks if the trit-object is True.

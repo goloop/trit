@@ -27,8 +27,8 @@ func TestIsFalse(t *testing.T) {
 	}
 }
 
-// TestIsNil tests the IsNil function.
-func TestIsNil(t *testing.T) {
+// TestIsUnknown tests the IsUnknown function.
+func TestIsUnknown(t *testing.T) {
 	tests := []struct {
 		name string
 		in   int
@@ -41,9 +41,9 @@ func TestIsNil(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsNil(test.in)
+			result := IsUnknown(test.in)
 			if result != test.out {
-				t.Errorf("isNil did not return %v for %v",
+				t.Errorf("IsUnknown did not return %v for %v",
 					test.out, test.in)
 			}
 		})
@@ -82,7 +82,7 @@ func TestSet(t *testing.T) {
 	}{
 		{"-1 should return False", -1, False},
 		{"1 should return True", 1, True},
-		{"0 should return Nil", 0, Nil},
+		{"0 should return Unknown", 0, Unknown},
 	}
 
 	for _, test := range tests {
@@ -106,7 +106,7 @@ func TestConvert(t *testing.T) {
 	}{
 		{"-0.1 should return False", -0.1, False},
 		{"7.7 should return True", 7.7, True},
-		{"0.0 should return Nil", 0.0, Nil},
+		{"0.0 should return Unknown", 0.0, Unknown},
 	}
 
 	for _, test := range tests {
@@ -130,7 +130,7 @@ func TestLogicToTrit(t *testing.T) {
 	}{
 		{"1 should return True", 1, True},
 		{"-1 should return False", -1, False},
-		{"0 should return Nil", 0, Nil},
+		{"0 should return Unknown", 0, Unknown},
 		{"-77 should return False", -77, False},
 		{"1000000 should return True", 1000000, True},
 	}
@@ -151,7 +151,7 @@ func TestLogicToTrit(t *testing.T) {
 		out  Trit
 	}{
 		{"1 should return True", 1, True},
-		{"0 should return Nil", 0, Nil},
+		{"0 should return Unknown", 0, Unknown},
 		{"1000000 should return True", 1000000, True},
 	}
 
@@ -172,7 +172,7 @@ func TestLogicToTrit(t *testing.T) {
 	}{
 		{"0.3 should return True", 0.3, True},
 		{"-0.3 should return False", -0.3, False},
-		{"0.0 should return Nil", 0.0, Nil},
+		{"0.0 should return Unknown", 0.0, Unknown},
 		{"-77.5 should return False", -77.5, False},
 		{"1000000.5 should return True", 1000000.5, True},
 	}
@@ -215,7 +215,7 @@ func TestLogicToTrit(t *testing.T) {
 	}{
 		{"True should return True", True, True},
 		{"False should return False", False, False},
-		{"Nil should return False", Nil, Nil},
+		{"Unknown should return False", Unknown, Unknown},
 	}
 
 	for _, test := range testsTrit {
@@ -232,52 +232,52 @@ func TestLogicToTrit(t *testing.T) {
 // TestDefault tests the Default method.
 func TestDefault(t *testing.T) {
 	t.Run("Default with bool value", func(t *testing.T) {
-		t1 := Nil
+		t1 := Unknown
 		Default(&t1, true)
 		if t1 != True {
-			t.Errorf("Default did not update Nil to True")
+			t.Errorf("Default did not update Unknown to True")
 		}
 
-		t2 := Nil
+		t2 := Unknown
 		Default(&t2, false)
 		if t2 != False {
-			t.Errorf("Default did not update Nil to False")
+			t.Errorf("Default did not update Unknown to False")
 		}
 	})
 
 	t.Run("Default with numeric value", func(t *testing.T) {
-		t1 := Nil
+		t1 := Unknown
 		Default(&t1, int32(1)) // for example int32
 		if t1 != True {
-			t.Errorf("Default did not update Nil to True")
+			t.Errorf("Default did not update Unknown to True")
 		}
 
-		t2 := Nil
+		t2 := Unknown
 		Default(&t2, int64(-1)) // for example int64
 		if t2 != False {
-			t.Errorf("Default did not update Nil to False")
+			t.Errorf("Default did not update Unknown to False")
 		}
 	})
 
 	t.Run("Default with Trit value", func(t *testing.T) {
-		t1 := Nil
+		t1 := Unknown
 		Default(&t1, True)
 		if t1 != True {
-			t.Errorf("Default did not update Nil to True")
+			t.Errorf("Default did not update Unknown to True")
 		}
 
-		t2 := Nil
+		t2 := Unknown
 		Default(&t2, False)
 		if t2 != False {
-			t.Errorf("Default did not update Nil to False")
+			t.Errorf("Default did not update Unknown to False")
 		}
 	})
 
-	t.Run("Should not update non-Nil Trit", func(t *testing.T) {
+	t.Run("Should not update non-Unknown Trit", func(t *testing.T) {
 		t1 := True
 		Default(&t1, false)
 		if t1 != True {
-			t.Errorf("Default updated non-Nil Trit")
+			t.Errorf("Default updated non-Unknown Trit")
 		}
 	})
 }
@@ -290,7 +290,7 @@ func TestNot(t *testing.T) {
 		out  Trit
 	}{
 		{"Not should return True for False", False, True},
-		{"Not should return Nil for Nil", Nil, Nil},
+		{"Not should return Unknown for Unknown", Unknown, Unknown},
 		{"Not should return False for True", True, False},
 	}
 
@@ -312,7 +312,7 @@ func TestMa(t *testing.T) {
 		out  Trit
 	}{
 		{"Ma should return False for False", False, False},
-		{"Ma should return True for Nil", Nil, True},
+		{"Ma should return True for Unknown", Unknown, True},
 		{"Ma should return True for True", True, True},
 	}
 
@@ -334,7 +334,7 @@ func TestLa(t *testing.T) {
 		out  Trit
 	}{
 		{"La should return False for False", False, False},
-		{"La should return False for Nil", Nil, False},
+		{"La should return False for Unknown", Unknown, False},
 		{"La should return True for True", True, True},
 	}
 
@@ -356,7 +356,7 @@ func TestIa(t *testing.T) {
 		out  Trit
 	}{
 		{"Ia should return False for False", False, False},
-		{"Ia should return True for Nil", Nil, True},
+		{"Ia should return True for Unknown", Unknown, True},
 		{"Ia should return False for True", True, False},
 	}
 
@@ -378,15 +378,15 @@ func TestAnd(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"And should return False for (False, False)", False, False, False},
-		{"And should return False for (False, Nil)", False, Nil, False},
-		{"And should return False for (False, True)", False, True, False},
-		{"And should return False for (Nil, False)", Nil, False, False},
-		{"And should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"And should return Nil for (Nil, True)", Nil, True, Nil},
-		{"And should return False for (True, False)", True, False, False},
-		{"And should return Nil for (True, Nil)", True, Nil, Nil},
-		{"And should return True for (True, True)", True, True, True},
+		{"Should be False for (False, False)", False, False, False},
+		{"Should be False for (False, Unknown)", False, Unknown, False},
+		{"Should be False for (False, True)", False, True, False},
+		{"Should be False for (Unknown, False)", Unknown, False, False},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Should be False for (True, False)", True, False, False},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {
@@ -407,15 +407,15 @@ func TestOr(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Or should return False for (False, False)", False, False, False},
-		{"Or should return Nil for (False, Nil)", False, Nil, Nil},
-		{"Or should return True for (False, True)", False, True, True},
-		{"Or should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Or should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Or should return True for (Nil, True)", Nil, True, True},
-		{"Or should return True for (True, False)", True, False, True},
-		{"Or should return True for (True, Nil)", True, Nil, True},
-		{"Or should return True for (True, True)", True, True, True},
+		{"Should be False for (False, False)", False, False, False},
+		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Should be True for (False, True)", False, True, True},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be True for (Unknown, True)", Unknown, True, True},
+		{"Should be True for (True, False)", True, False, True},
+		{"Should be True for (True, Unknown)", True, Unknown, True},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {
@@ -436,15 +436,15 @@ func TestXor(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Xor should return False for (False, False)", False, False, False},
-		{"Xor should return Nil for (False, Nil)", False, Nil, Nil},
-		{"Xor should return True for (False, True)", False, True, True},
-		{"Xor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Xor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Xor should return Nil for (Nil, True)", Nil, True, Nil},
-		{"Xor should return True for (True, False)", True, False, True},
-		{"Xor should return Nil for (True, Nil)", True, Nil, Nil},
-		{"Xor should return False for (True, True)", True, True, False},
+		{"Should be False for (False, False)", False, False, False},
+		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Should be True for (False, True)", False, True, True},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Should be True for (True, False)", True, False, True},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be False for (True, True)", True, True, False},
 	}
 
 	for _, test := range tests {
@@ -465,15 +465,15 @@ func TestNand(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Nand should return True for (False, False)", False, False, True},
-		{"Nand should return True for (False, Nil)", False, Nil, True},
-		{"Nand should return True for (False, True)", False, True, True},
-		{"Nand should return True for (Nil, False)", Nil, False, True},
-		{"Nand should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nand should return Nil for (Nil, True)", Nil, True, Nil},
-		{"Nand should return True for (True, False)", True, False, True},
-		{"Nand should return Nil for (True, Nil)", True, Nil, Nil},
-		{"Nand should return False for (True, True)", True, True, False},
+		{"Should be True for (False, False)", False, False, True},
+		{"Should be True for (False, Unknown)", False, Unknown, True},
+		{"Should be True for (False, True)", False, True, True},
+		{"Should be True for (Unknown, False)", Unknown, False, True},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Should be True for (True, False)", True, False, True},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be False for (True, True)", True, True, False},
 	}
 
 	for _, test := range tests {
@@ -494,15 +494,15 @@ func TestNor(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Nor should return True for (False, False)", False, False, True},
-		{"Nor should return Nil for (False, Nil)", False, Nil, Nil},
-		{"Nor should return False for (False, True)", False, True, False},
-		{"Nor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Nor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nor should return False for (Nil, True)", Nil, True, False},
-		{"Nor should return False for (True, False)", True, False, False},
-		{"Nor should return False for (True, Nil)", True, Nil, False},
-		{"Nor should return False for (True, True)", True, True, False},
+		{"Should be True for (False, False)", False, False, True},
+		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Should be False for (False, True)", False, True, False},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be False for (Unknown, True)", Unknown, True, False},
+		{"Should be False for (True, False)", True, False, False},
+		{"Should be False for (True, Unknown)", True, Unknown, False},
+		{"Should be False for (True, True)", True, True, False},
 	}
 
 	for _, test := range tests {
@@ -523,15 +523,15 @@ func TestNxor(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Nxor should return True for (False, False)", False, False, True},
-		{"Nxor should return Nil for (False, Nil)", False, Nil, Nil},
-		{"Nxor should return False for (False, True)", False, True, False},
-		{"Nxor should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Nxor should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Nxor should return Nil for (Nil, True)", Nil, True, Nil},
-		{"Nxor should return False for (True, False)", True, False, False},
-		{"Nxor should return Nil for (True, Nil)", True, Nil, Nil},
-		{"Nxor should return True for (True, True)", True, True, True},
+		{"Should be True for (False, False)", False, False, True},
+		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Should be False for (False, True)", False, True, False},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Should be False for (True, False)", True, False, False},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {
@@ -552,15 +552,15 @@ func TestMin(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Min should return False for (False, False)", False, False, False},
-		{"Min should return False for (False, Nil)", False, Nil, False},
-		{"Min should return False for (False, True)", False, True, False},
-		{"Min should return False for (Nil, False)", Nil, False, False},
-		{"Min should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Min should return Nil for (Nil, True)", Nil, True, Nil},
-		{"Min should return False for (True, False)", True, False, False},
-		{"Min should return Nil for (True, Nil)", True, Nil, Nil},
-		{"Min should return True for (True, True)", True, True, True},
+		{"Should be False for (False, False)", False, False, False},
+		{"Should be False for (False, Unknown)", False, Unknown, False},
+		{"Should be False for (False, True)", False, True, False},
+		{"Should be False for (Unknown, False)", Unknown, False, False},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Should be False for (True, False)", True, False, False},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {
@@ -581,15 +581,15 @@ func TestMax(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Max should return False for (False, False)", False, False, False},
-		{"Max should return Nil for (False, Nil)", False, Nil, Nil},
-		{"Max should return True for (False, True)", False, True, True},
-		{"Max should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Max should return Nil for (Nil, Nil)", Nil, Nil, Nil},
-		{"Max should return True for (Nil, True)", Nil, True, True},
-		{"Max should return True for (True, False)", True, False, True},
-		{"Max should return True for (True, Nil)", True, Nil, True},
-		{"Max should return True for (True, True)", True, True, True},
+		{"Should be False for (False, False)", False, False, False},
+		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Should be True for (False, True)", False, True, True},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Should be True for (Unknown, True)", Unknown, True, True},
+		{"Should be True for (True, False)", True, False, True},
+		{"Should be True for (True, Unknown)", True, Unknown, True},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {
@@ -610,15 +610,15 @@ func TestImp(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Imp should return True for (False, False)", False, False, True},
-		{"Imp should return True for (False, Nil)", False, Nil, True},
-		{"Imp should return True for (False, True)", False, True, True},
-		{"Imp should return Nil for (Nil, False)", Nil, False, Nil},
-		{"Imp should return True for (Nil, Nil)", Nil, Nil, True},
-		{"Imp should return True for (Nil, True)", Nil, True, True},
-		{"Imp should return False for (True, False)", True, False, False},
-		{"Imp should return Nil for (True, Nil)", True, Nil, Nil},
-		{"Imp should return True for (True, True)", True, True, True},
+		{"Should be True for (False, False)", False, False, True},
+		{"Should be True for (False, Unknown)", False, Unknown, True},
+		{"Should be True for (False, True)", False, True, True},
+		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Should be True for (Unknown, Unknown)", Unknown, Unknown, True},
+		{"Should be True for (Unknown, True)", Unknown, True, True},
+		{"Should be False for (True, False)", True, False, False},
+		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Should be True for (True, True)", True, True, True},
 	}
 
 	for _, test := range tests {

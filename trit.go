@@ -1,7 +1,8 @@
-// Package trit provides three-level logic with the states False, Nil and True.
+// Package trit provides three-level logic with the states False,
+// Unknown and True.
 //
 // Trit (short for "trinary digit") is an information unit that can take three
-// states, usually expressed as False, Nil, and True. Trit is a fundamental
+// states, usually expressed as False, Unknown, and True. Trit is a fundamental
 // unit of trinary or ternary logic systems, including trinary computers and
 // balanced ternary systems. This package provides basic logic operations
 // including NOT, AND, OR, XOR, NAND, NOR, and XNOR.
@@ -11,7 +12,7 @@
 // is beneficial, such as database systems and logic circuits.
 //
 // Truth Tables of Three-valued logic
-// (T=True, N=Nil, F=False)
+// (T=True, U=Unknown, F=False)
 //
 //	NA   - Not
 //	MA   - Modus Ponens Absorption
@@ -33,51 +34,51 @@
 //	 A  | NA      A  | MA      A  | LA      A  | IA
 //	----+----    ----+----    ----+----    ----+----
 //	 F  |  T      F  |  F      F  |  F      F  |  F
-//	 N  |  N      N  |  T      N  |  F      N  |  T
+//	 U  |  U      U  |  T      U  |  F      U  |  T
 //	 T  |  F      T  |  T      T  |  T      T  |  F
 //
 //
 //	 A | B | AND       A | B |  OR       A | B | XOR
 //	---+---+------    ---+---+------    ---+---+------
 //	 F | F |  F        F | F |  F        F | F |  F
-//	 F | N |  F        F | N |  N        F | N |  N
+//	 F | U |  F        F | U |  U        F | U |  U
 //	 F | T |  F        F | T |  T        F | T |  T
-//	 N | F |  F        N | F |  N        N | F |  N
-//	 N | N |  N        N | N |  N        N | N |  N
-//	 N | T |  N        N | T |  T        N | T |  N
+//	 U | F |  F        U | F |  U        U | F |  U
+//	 U | U |  U        U | U |  U        U | U |  U
+//	 U | T |  U        U | T |  T        U | T |  U
 //	 T | F |  F        T | F |  T        T | F |  T
-//	 T | N |  N        T | N |  T        T | N |  N
+//	 T | U |  U        T | U |  T        T | U |  U
 //	 T | T |  T        T | T |  T        T | T |  F
 //
 //
 //	 A | B | NAND      A | B | NOR       A | B | NXOR
 //	---+---+------    ---+---+------    ---+---+------
 //	 F | F |  T        F | F |  T        F | F |  T
-//	 F | N |  T        F | N |  N        F | N |  N
+//	 F | U |  T        F | U |  U        F | U |  U
 //	 F | T |  T        F | T |  F        F | T |  F
-//	 N | F |  T        N | F |  N        N | F |  N
-//	 N | N |  N        N | N |  N        N | N |  N
-//	 N | T |  N        N | T |  F        N | T |  N
+//	 U | F |  T        U | F |  U        U | F |  U
+//	 U | U |  U        U | U |  U        U | U |  U
+//	 U | T |  U        U | T |  F        U | T |  U
 //	 T | F |  T        T | F |  F        T | F |  F
-//	 T | N |  N        T | N |  F        T | N |  N
+//	 T | U |  U        T | U |  F        T | U |  U
 //	 T | T |  F        T | T |  F        T | T |  T
 //
 //
 //	 A | B | IMP       A | B | MIN       A | B | MAX
 //	---+---+------    ---+---+------    ---+---+------
 //	 F | F |  T        F | F |  F        F | F |  F
-//	 F | N |  T        F | N |  F        F | N |  N
+//	 F | U |  T        F | U |  F        F | U |  U
 //	 F | T |  T        F | T |  F        F | T |  T
-//	 N | F |  N        N | F |  F        N | F |  N
-//	 N | N |  T        N | N |  N        N | N |  N
-//	 N | T |  T        N | T |  N        N | T |  T
+//	 U | F |  U        U | F |  F        U | F |  U
+//	 U | U |  T        U | U |  U        U | U |  U
+//	 U | T |  T        U | T |  U        U | T |  T
 //	 T | F |  F        T | F |  F        T | F |  T
-//	 T | N |  N        T | N |  N        T | N |  T
+//	 T | U |  U        T | U |  U        T | U |  T
 //	 T | T |  T        T | T |  T        T | T |  T
 package trit
 
 // Trit represents a trinary digit, which can take on three distinct
-// states: False, Nil, or True. This type is a fundamental unit of
+// states: False, Unknown, or True. This type is a fundamental unit of
 // trinary or ternary logic systems, including trinary computers and
 // balanced ternary systems.
 type Trit int8
@@ -90,10 +91,10 @@ const (
 	// *Any negative numbers are also considered False.
 	False Trit = -1
 
-	// Nil represents an unknown or indeterminate Trit state. It is
+	// Unknown represents an unknown or indeterminate Trit state. It is
 	// beneficial in scenarios where a "maybe" state is required.
-	// Nil is represented by a zero value in the underlying int8 type.
-	Nil Trit = 0
+	// Unknown is represented by a zero value in the underlying int8 type.
+	Unknown Trit = 0
 
 	// True represents the Trit state equivalent to 'true' in binary
 	// logic. It is represented by a positive value (1) in the underlying
@@ -103,68 +104,68 @@ const (
 	True Trit = 1
 )
 
-// Default is a method that checks if the value of the Trit is Nil.
+// Default is a method that checks if the value of the Trit is Unknown.
 // If it is, it sets the Trit to the given Trit argument.
 //
 // Example usage:
 //
-//	t := trit.Nil
+//	t := trit.Unknown
 //	t.Default(trit.True)
 //	fmt.Println(t.String()) // Output: True
 func (t *Trit) Default(trit Trit) Trit {
-	if t.Val() == Nil {
+	if t.Val() == Unknown {
 		*t = trit
 	}
 
 	return *t
 }
 
-// TrueIfNil is a method that checks if the value of the Trit is Nil.
+// TrueIfUnknown is a method that checks if the value of the Trit is Unknown.
 // If it is, it sets the Trit to True.
 // It then returns the updated Trit.
 //
 // Example usage:
 //
-//	t := trit.Nil
-//	t.TrueIfNil()
+//	t := trit.Unknown
+//	t.TrueIfUnknown()
 //	fmt.Println(t.String()) // Output: True
-func (t *Trit) TrueIfNil() Trit {
-	if t.Val() == Nil {
+func (t *Trit) TrueIfUnknown() Trit {
+	if t.Val() == Unknown {
 		*t = True
 	}
 
 	return *t
 }
 
-// FalseIfNil is a method that checks if the value of the Trit is Nil.
+// FalseIfUnknown is a method that checks if the value of the Trit is Unknown.
 // If it is, it sets the Trit to False.
 // It then returns the updated Trit.
 //
 // Example usage:
 //
-//	t := trit.Nil
-//	t.FalseIfNil()
+//	t := trit.Unknown
+//	t.FalseIfUnknown()
 //	fmt.Println(t.String()) // Output: False
-func (t *Trit) FalseIfNil() Trit {
-	if t.Val() == Nil {
+func (t *Trit) FalseIfUnknown() Trit {
+	if t.Val() == Unknown {
 		*t = False
 	}
 
 	return *t
 }
 
-// Clean is a method that checks if the value of the Trit is Nil.
-// If it is, it resets the Trit to Nil.
+// Clean is a method that checks if the value of the Trit is Unknown.
+// If it is, it resets the Trit to Unknown.
 // It then returns the updated Trit.
 //
 // Example usage:
 //
 //	t := trit.True
 //	t.Clean()
-//	fmt.Println(t.String()) // Output: Nil
+//	fmt.Println(t.String()) // Output: Unknown
 func (t *Trit) Clean() Trit {
-	if t.Val() == Nil {
-		*t = Nil
+	if t.Val() == Unknown {
+		*t = Unknown
 	}
 
 	return *t
@@ -185,14 +186,14 @@ func (t Trit) IsFalse() bool {
 	return false
 }
 
-// IsNil returns true if the Trit value represents a Nil state, which
+// IsUnknown returns true if the Trit value represents a Unknown state, which
 // is zero in the underlying int8 type.
 //
 // Example usage:
 //
 //	t := trit.Trit(0)
-//	fmt.Println(t.IsNil()) // Output: true
-func (t Trit) IsNil() bool {
+//	fmt.Println(t.IsUnknown()) // Output: true
+func (t Trit) IsUnknown() bool {
 	if int8(t) == 0 {
 		return true
 	}
@@ -216,7 +217,7 @@ func (t Trit) IsTrue() bool {
 }
 
 // Set assigns a Trit value based on the given integer. Negative values
-// are interpreted as False, zero as Nil, and positive values as True.
+// are interpreted as False, zero as Unknown, and positive values as True.
 //
 // Example usage:
 //
@@ -230,14 +231,14 @@ func (t *Trit) Set(v int) Trit {
 	case v > 0:
 		*t = True
 	default:
-		*t = Nil
+		*t = Unknown
 	}
 
 	return *t
 }
 
 // Val returns the normalized Trit value if a Trit was not properly
-// initialized using the predefined constants (False, Nil, True).
+// initialized using the predefined constants (False, Unknown, True).
 // If a Trit was set using an int8 value other than -1, 0, or 1, Val
 // maps it to the closest Trit value.
 //
@@ -254,7 +255,7 @@ func (t Trit) Val() Trit {
 		return True
 	}
 
-	return Nil
+	return Unknown
 }
 
 // Norm normalizes the Trit value. If a Trit was set using an int8
@@ -282,7 +283,7 @@ func (t Trit) Int() int {
 }
 
 // String returns a string representation of a Trit value.
-// The possible return values are "False", "Nil", and "True".
+// The possible return values are "False", "Unknown", and "True".
 //
 // Example usage:
 //
@@ -296,13 +297,13 @@ func (t Trit) String() string {
 		return "True"
 	}
 
-	return "Nil"
+	return "Unknown"
 }
 
 // Not performs a logical NOT operation on a Trit value and returns the result.
 // This function applies the following rules based on the truth table for NOT:
 //   - Not(False) => True
-//   - Not(Nil)   => Nil
+//   - Not(Unknown)   => Unknown
 //   - Not(True)  => False
 //
 // Example usage:
@@ -318,14 +319,14 @@ func (t Trit) Not() Trit {
 		return False
 	}
 
-	return Nil
+	return Unknown
 }
 
 // Ma performs a logical MA (Modus Ponens Absorption) operation on a Trit
 // value and returns the result. This function applies the following rules
 // based on the truth table for MA:
 //   - Ma(False) => False
-//   - Ma(Nil)   => True
+//   - Ma(Unknown)   => True
 //   - Ma(True)  => True
 //
 // Example usage:
@@ -345,7 +346,7 @@ func (t Trit) Ma() Trit {
 // and returns the result. This function applies the following rules based
 // on the truth table for LA:
 //   - La(False) => False
-//   - La(Nil)   => False
+//   - La(Unknown)   => False
 //   - La(True)  => True
 //
 // Example usage:
@@ -365,7 +366,7 @@ func (t Trit) La() Trit {
 // values and returns the result. This function applies the following
 // rules based on the truth table for IA:
 //   - Ia(False) => False
-//   - Ia(Nil)   => True
+//   - Ia(Unknown)   => True
 //   - Ia(True)  => False
 //
 // Example usage:
@@ -374,7 +375,7 @@ func (t Trit) La() Trit {
 //	result := a.Ia()
 //	fmt.Println(result.String()) // Output: False
 func (t Trit) Ia() Trit {
-	if t.Val() == Nil {
+	if t.Val() == Unknown {
 		return True
 	}
 
@@ -385,28 +386,28 @@ func (t Trit) Ia() Trit {
 // the result. This function applies the following rules based on the truth
 // table for AND:
 //   - And(False, False) => False
-//   - And(False, Nil)   => False
+//   - And(False, Unknown)   => False
 //   - And(False, True)  => False
-//   - And(Nil, False)   => False
-//   - And(Nil, Nil)     => Nil
-//   - And(Nil, True)    => Nil
+//   - And(Unknown, False)   => False
+//   - And(Unknown, Unknown)     => Unknown
+//   - And(Unknown, True)    => Unknown
 //   - And(True, False)  => False
-//   - And(True, Nil)    => Nil
+//   - And(True, Unknown)    => Unknown
 //   - And(True, True)   => True
 //
 // Example usage:
 //
 //	a := trit.True
-//	b := trit.Nil
+//	b := trit.Unknown
 //	result := a.And(b)
-//	fmt.Println(result.String()) // Output: Nil
+//	fmt.Println(result.String()) // Output: Unknown
 func (t Trit) And(trit Trit) Trit {
 	if t.Val() == False || trit.Val() == False {
 		return False
 	}
 
-	if t.Val() == Nil || trit.Val() == Nil {
-		return Nil
+	if t.Val() == Unknown || trit.Val() == Unknown {
+		return Unknown
 	}
 
 	return True
@@ -416,13 +417,13 @@ func (t Trit) And(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for OR:
 //   - Or(False, False) => False
-//   - Or(False, Nil)   => Nil
+//   - Or(False, Unknown)   => Unknown
 //   - Or(False, True)  => True
-//   - Or(Nil, False)   => Nil
-//   - Or(Nil, Nil)     => Nil
-//   - Or(Nil, True)    => True
+//   - Or(Unknown, False)   => Unknown
+//   - Or(Unknown, Unknown)     => Unknown
+//   - Or(Unknown, True)    => True
 //   - Or(True, False)  => True
-//   - Or(True, Nil)    => True
+//   - Or(True, Unknown)    => True
 //   - Or(True, True)   => True
 //
 // Example usage:
@@ -436,8 +437,8 @@ func (t Trit) Or(trit Trit) Trit {
 		return True
 	}
 
-	if t.Val() == Nil || trit.Val() == Nil {
-		return Nil
+	if t.Val() == Unknown || trit.Val() == Unknown {
+		return Unknown
 	}
 
 	return False
@@ -447,13 +448,13 @@ func (t Trit) Or(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for XOR:
 //   - Xor(False, False) => False
-//   - Xor(False, Nil)   => Nil
+//   - Xor(False, Unknown)   => Unknown
 //   - Xor(False, True)  => True
-//   - Xor(Nil, False)   => Nil
-//   - Xor(Nil, Nil)     => Nil
-//   - Xor(Nil, True)    => Nil
+//   - Xor(Unknown, False)   => Unknown
+//   - Xor(Unknown, Unknown)     => Unknown
+//   - Xor(Unknown, True)    => Unknown
 //   - Xor(True, False)  => True
-//   - Xor(True, Nil)    => Nil
+//   - Xor(True, Unknown)    => Unknown
 //   - Xor(True, True)   => False
 //
 // Example usage:
@@ -463,12 +464,12 @@ func (t Trit) Or(trit Trit) Trit {
 //	result := a.Xor(b)
 //	fmt.Println(result.String()) // Output: True
 func (t Trit) Xor(trit Trit) Trit {
-	// Check first, because Xor(Nil, Nil) should be Nil.
-	if t.Val() == Nil || trit.Val() == Nil {
-		return Nil
+	// Check first, because Xor(Unknown, Unknown) should be Unknown.
+	if t.Val() == Unknown || trit.Val() == Unknown {
+		return Unknown
 	}
 
-	// Pay attention, Nil == Nil != False
+	// Pay attention, Unknown == Unknown != False
 	if t.Val() == trit.Val() {
 		return False
 	}
@@ -480,19 +481,19 @@ func (t Trit) Xor(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for NAND:
 //   - Nand(False, False) => True
-//   - Nand(False, Nil)   => True
+//   - Nand(False, Unknown)   => True
 //   - Nand(False, True)  => True
-//   - Nand(Nil, False)   => True
-//   - Nand(Nil, Nil)     => Nil
-//   - Nand(Nil, True)    => Nil
+//   - Nand(Unknown, False)   => True
+//   - Nand(Unknown, Unknown)     => Unknown
+//   - Nand(Unknown, True)    => Unknown
 //   - Nand(True, False)  => True
-//   - Nand(True, Nil)    => Nil
+//   - Nand(True, Unknown)    => Unknown
 //   - Nand(True, True)   => False
 //
 // Example usage:
 //
 //	a := trit.True
-//	b := trit.Nil
+//	b := trit.Unknown
 //	result := a.Nand(b)
 //	fmt.Println(result.String()) // Output: True
 func (t Trit) Nand(trit Trit) Trit {
@@ -503,13 +504,13 @@ func (t Trit) Nand(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for NOR:
 //   - Nor(False, False) => True
-//   - Nor(False, Nil)   => Nil
+//   - Nor(False, Unknown)   => Unknown
 //   - Nor(False, True)  => False
-//   - Nor(Nil, False)   => Nil
-//   - Nor(Nil, Nil)     => Nil
-//   - Nor(Nil, True)    => False
+//   - Nor(Unknown, False)   => Unknown
+//   - Nor(Unknown, Unknown)     => Unknown
+//   - Nor(Unknown, True)    => False
 //   - Nor(True, False)  => False
-//   - Nor(True, Nil)    => False
+//   - Nor(True, Unknown)    => False
 //   - Nor(True, True)   => False
 //
 // Example usage:
@@ -526,13 +527,13 @@ func (t Trit) Nor(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for XNOR:
 //   - Nxor(False, False) => True
-//   - Nxor(False, Nil)   => Nil
+//   - Nxor(False, Unknown)   => Unknown
 //   - Nxor(False, True)  => False
-//   - Nxor(Nil, False)   => Nil
-//   - Nxor(Nil, Nil)     => Nil
-//   - Nxor(Nil, True)    => Nil
+//   - Nxor(Unknown, False)   => Unknown
+//   - Nxor(Unknown, Unknown)     => Unknown
+//   - Nxor(Unknown, True)    => Unknown
 //   - Nxor(True, False)  => False
-//   - Nxor(True, Nil)    => Nil
+//   - Nxor(True, Unknown)    => Unknown
 //   - Nxor(True, True)  => True
 //
 // Example usage:
@@ -549,13 +550,13 @@ func (t Trit) Nxor(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for MIN:
 //   - Min(False, False) => False
-//   - Min(False, Nil)   => False
+//   - Min(False, Unknown)   => False
 //   - Min(False, True)  => False
-//   - Min(Nil, False)   => False
-//   - Min(Nil, Nil)     => Nil
-//   - Min(Nil, True)    => Nil
+//   - Min(Unknown, False)   => False
+//   - Min(Unknown, Unknown)     => Unknown
+//   - Min(Unknown, True)    => Unknown
 //   - Min(True, False)  => False
-//   - Min(True, Nil)    => Nil
+//   - Min(True, Unknown)    => Unknown
 //   - Min(True, True)   => True
 //
 // Example usage:
@@ -572,13 +573,13 @@ func (t Trit) Min(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for MAX:
 //   - Max(False, False) => False
-//   - Max(False, Nil)   => Nil
+//   - Max(False, Unknown)   => Unknown
 //   - Max(False, True)  => True
-//   - Max(Nil, False)   => Nil
-//   - Max(Nil, Nil)     => Nil
-//   - Max(Nil, True)    => True
+//   - Max(Unknown, False)   => Unknown
+//   - Max(Unknown, Unknown)     => Unknown
+//   - Max(Unknown, True)    => True
 //   - Max(True, False)  => True
-//   - Max(True, Nil)    => True
+//   - Max(True, Unknown)    => True
 //   - Max(True, True)   => True
 //
 // Example usage:
@@ -595,13 +596,13 @@ func (t Trit) Max(trit Trit) Trit {
 // the result. This function applies the following rules based on the truth
 // table for IMP:
 //   - Imp(False, False) => True
-//   - Imp(False, Nil)   => True
+//   - Imp(False, Unknown)   => True
 //   - Imp(False, True)  => True
-//   - Imp(Nil, False)   => Nil
-//   - Imp(Nil, Nil)     => True
-//   - Imp(Nil, True)    => True
+//   - Imp(Unknown, False)   => Unknown
+//   - Imp(Unknown, Unknown)     => True
+//   - Imp(Unknown, True)    => True
 //   - Imp(True, False)  => False
-//   - Imp(True, Nil)    => Nil
+//   - Imp(True, Unknown)    => Unknown
 //   - Imp(True, True)   => True
 //
 // Example usage:
@@ -611,12 +612,12 @@ func (t Trit) Max(trit Trit) Trit {
 //	result := a.Imp(b)
 //	fmt.Println(result.String()) // Output: False
 func (t Trit) Imp(trit Trit) Trit {
-	if t.Val() == Nil && trit.Val() == Nil {
+	if t.Val() == Unknown && trit.Val() == Unknown {
 		return True
 	} else if t.Val() == False || trit.Val() == True {
 		return True
-	} else if t.Val() == Nil || trit.Val() == Nil {
-		return Nil
+	} else if t.Val() == Unknown || trit.Val() == Unknown {
+		return Unknown
 	}
 
 	return False
