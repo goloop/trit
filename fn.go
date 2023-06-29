@@ -290,3 +290,43 @@ func Max[T, U Logicable](a T, b U) Trit {
 	tb := logicToTrit(b)
 	return ta.Max(tb)
 }
+
+// Imp performs a logical IMP operation between two Trit-Like values
+// and returns the result as Trit.
+//
+// See Trit.Imp() for more information.
+func Imp[T, U Logicable](a T, b U) Trit {
+	ta := logicToTrit(a)
+	tb := logicToTrit(b)
+	return ta.Imp(tb)
+}
+
+// Nimp performs a logical NIMP operation between two Trit-Like values
+// and returns the result as Trit.
+//
+// See Trit.Nimp() for more information.
+func Nimp[T, U Logicable](a T, b U) Trit {
+	ta := logicToTrit(a)
+	tb := logicToTrit(b)
+	return ta.Nimp(tb)
+}
+
+// Eq performs a logical EQ operation between two Trit-Like values
+// and returns the result as Trit.
+//
+// See Trit.Eq() for more information.
+func Eq[T, U Logicable](a T, b U) Trit {
+	ta := logicToTrit(a)
+	tb := logicToTrit(b)
+	return ta.Eq(tb)
+}
+
+// Neq performs a logical NEQ operation between two Trit-Like values
+// and returns the result as Trit.
+//
+// See Trit.Neq() for more information.
+func Neq[T, U Logicable](a T, b U) Trit {
+	ta := logicToTrit(a)
+	tb := logicToTrit(b)
+	return ta.Neq(tb)
+}

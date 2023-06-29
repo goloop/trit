@@ -111,7 +111,11 @@ The truth table for the three-valued logic system is shown here. It's a mathemat
  NXOR - Logical not XOR
 
  IMP  - Implication in Lukasevich's Logic
+ EQ   - If and only if
  MIN  - Minimum
+
+ NIMP - NOT IMP
+ NEQ  - NOT EQ
  MAX  - Maximum
 
   A  | NA      A  | MA      A  | LA      A  | IA
@@ -145,17 +149,30 @@ The truth table for the three-valued logic system is shown here. It's a mathemat
   T | U |  U        T | U |  F        T | U |  U
   T | T |  F        T | T |  F        T | T |  T
 
-  A | B | IMP       A | B | MIN       A | B | MAX
+  A | B | IMP       A | B |  EQ       A | B | MIN
  ---+---+------    ---+---+------    ---+---+------
-  F | F |  T        F | F |  F        F | F |  F
-  F | U |  T        F | U |  F        F | U |  U
-  F | T |  T        F | T |  F        F | T |  T
-  U | F |  U        U | F |  F        U | F |  U
+  F | F |  T        F | F |  T        F | F |  F
+  F | U |  T        F | U |  U        F | U |  F
+  F | T |  T        F | T |  F        F | T |  F
+  U | F |  U        U | F |  U        U | F |  F
   U | U |  T        U | U |  U        U | U |  U
-  U | T |  T        U | T |  U        U | T |  T
-  T | F |  F        T | F |  F        T | F |  T
-  T | U |  U        T | U |  U        T | U |  T
+  U | T |  T        U | T |  U        U | T |  U
+  T | F |  F        T | F |  F        T | F |  F
+  T | U |  U        T | U |  U        T | U |  U
   T | T |  T        T | T |  T        T | T |  T
+
+
+  A | B | NIMP      A | B | NEQ       A | B | MAX
+ ---+---+------    ---+---+------    ---+---+------
+  F | F |  F        F | F |  F        F | F |  F
+  F | U |  F        F | U |  U        F | U |  U
+  F | T |  F        F | T |  T        F | T |  T
+  U | F |  U        U | F |  U        U | F |  U
+  U | U |  F        U | U |  U        U | U |  U
+  U | T |  F        U | T |  U        U | T |  T
+  T | F |  T        T | F |  T        T | F |  T
+  T | U |  U        T | U |  U        T | U |  T
+  T | T |  F        T | T |  F        T | T |  T
 ```
 
 ## Explanation

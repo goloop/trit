@@ -28,7 +28,11 @@
 //	NXOR - Logical not XOR
 //
 //	IMP  - Implication in Lukasevich's Logic
+//	EQ   - If and only if
 //	MIN  - Minimum
+//
+//	NIMP - NOT IMP
+//	NEQ  - NOT EQ
 //	MAX  - Maximum
 //
 //	 A  | NA      A  | MA      A  | LA      A  | IA
@@ -64,17 +68,30 @@
 //	 T | T |  F        T | T |  F        T | T |  T
 //
 //
-//	 A | B | IMP       A | B | MIN       A | B | MAX
+//	 A | B | IMP       A | B |  EQ       A | B | MIN
 //	---+---+------    ---+---+------    ---+---+------
-//	 F | F |  T        F | F |  F        F | F |  F
-//	 F | U |  T        F | U |  F        F | U |  U
-//	 F | T |  T        F | T |  F        F | T |  T
-//	 U | F |  U        U | F |  F        U | F |  U
+//	 F | F |  T        F | F |  T        F | F |  F
+//	 F | U |  T        F | U |  U        F | U |  F
+//	 F | T |  T        F | T |  F        F | T |  F
+//	 U | F |  U        U | F |  U        U | F |  F
 //	 U | U |  T        U | U |  U        U | U |  U
-//	 U | T |  T        U | T |  U        U | T |  T
-//	 T | F |  F        T | F |  F        T | F |  T
-//	 T | U |  U        T | U |  U        T | U |  T
+//	 U | T |  T        U | T |  U        U | T |  U
+//	 T | F |  F        T | F |  F        T | F |  F
+//	 T | U |  U        T | U |  U        T | U |  U
 //	 T | T |  T        T | T |  T        T | T |  T
+//
+//
+//	 A | B | NIMP      A | B | NEQ       A | B | MAX
+//	---+---+------    ---+---+------    ---+---+------
+//	 F | F |  F        F | F |  F        F | F |  F
+//	 F | U |  F        F | U |  U        F | U |  U
+//	 F | T |  F        F | T |  T        F | T |  T
+//	 U | F |  U        U | F |  U        U | F |  U
+//	 U | U |  F        U | U |  U        U | U |  U
+//	 U | T |  F        U | T |  U        U | T |  T
+//	 T | F |  T        T | F |  T        T | F |  T
+//	 T | U |  U        T | U |  U        T | U |  T
+//	 T | T |  F        T | T |  F        T | T |  T
 package trit
 
 // Trit represents a trinary digit, which can take on three distinct
@@ -302,9 +319,9 @@ func (t Trit) String() string {
 
 // Not performs a logical NOT operation on a Trit value and returns the result.
 // This function applies the following rules based on the truth table for NOT:
-//   - Not(False) => True
-//   - Not(Unknown)   => Unknown
-//   - Not(True)  => False
+//   - Not(False)   => True
+//   - Not(Unknown) => Unknown
+//   - Not(True)    => False
 //
 // Example usage:
 //
@@ -325,9 +342,9 @@ func (t Trit) Not() Trit {
 // Ma performs a logical MA (Modus Ponens Absorption) operation on a Trit
 // value and returns the result. This function applies the following rules
 // based on the truth table for MA:
-//   - Ma(False) => False
-//   - Ma(Unknown)   => True
-//   - Ma(True)  => True
+//   - Ma(False)   => False
+//   - Ma(Unknown) => True
+//   - Ma(True)    => True
 //
 // Example usage:
 //
@@ -345,9 +362,9 @@ func (t Trit) Ma() Trit {
 // La performs a logical LA (Law of Absorption) operation on a Trit value
 // and returns the result. This function applies the following rules based
 // on the truth table for LA:
-//   - La(False) => False
-//   - La(Unknown)   => False
-//   - La(True)  => True
+//   - La(False)   => False
+//   - La(Unknown) => False
+//   - La(True)    => True
 //
 // Example usage:
 //
@@ -365,9 +382,9 @@ func (t Trit) La() Trit {
 // Ia performs a logical IA (Implication Absorption) operation on a Trit
 // values and returns the result. This function applies the following
 // rules based on the truth table for IA:
-//   - Ia(False) => False
-//   - Ia(Unknown)   => True
-//   - Ia(True)  => False
+//   - Ia(False)   => False
+//   - Ia(Unknown) => True
+//   - Ia(True)    => False
 //
 // Example usage:
 //
@@ -385,15 +402,15 @@ func (t Trit) Ia() Trit {
 // And performs a logical AND operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for AND:
-//   - And(False, False) => False
+//   - And(False, False)     => False
 //   - And(False, Unknown)   => False
-//   - And(False, True)  => False
+//   - And(False, True)      => False
 //   - And(Unknown, False)   => False
-//   - And(Unknown, Unknown)     => Unknown
+//   - And(Unknown, Unknown) => Unknown
 //   - And(Unknown, True)    => Unknown
-//   - And(True, False)  => False
+//   - And(True, False)      => False
 //   - And(True, Unknown)    => Unknown
-//   - And(True, True)   => True
+//   - And(True, True)       => True
 //
 // Example usage:
 //
@@ -416,15 +433,15 @@ func (t Trit) And(trit Trit) Trit {
 // Or performs a logical OR operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for OR:
-//   - Or(False, False) => False
+//   - Or(False, False)     => False
 //   - Or(False, Unknown)   => Unknown
-//   - Or(False, True)  => True
+//   - Or(False, True)      => True
 //   - Or(Unknown, False)   => Unknown
-//   - Or(Unknown, Unknown)     => Unknown
+//   - Or(Unknown, Unknown) => Unknown
 //   - Or(Unknown, True)    => True
-//   - Or(True, False)  => True
+//   - Or(True, False)      => True
 //   - Or(True, Unknown)    => True
-//   - Or(True, True)   => True
+//   - Or(True, True)       => True
 //
 // Example usage:
 //
@@ -447,15 +464,15 @@ func (t Trit) Or(trit Trit) Trit {
 // Xor performs a logical XOR operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for XOR:
-//   - Xor(False, False) => False
+//   - Xor(False, False)     => False
 //   - Xor(False, Unknown)   => Unknown
-//   - Xor(False, True)  => True
+//   - Xor(False, True)      => True
 //   - Xor(Unknown, False)   => Unknown
-//   - Xor(Unknown, Unknown)     => Unknown
+//   - Xor(Unknown, Unknown) => Unknown
 //   - Xor(Unknown, True)    => Unknown
-//   - Xor(True, False)  => True
+//   - Xor(True, False)      => True
 //   - Xor(True, Unknown)    => Unknown
-//   - Xor(True, True)   => False
+//   - Xor(True, True)       => False
 //
 // Example usage:
 //
@@ -480,15 +497,15 @@ func (t Trit) Xor(trit Trit) Trit {
 // Nand performs a logical NAND operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for NAND:
-//   - Nand(False, False) => True
+//   - Nand(False, False)     => True
 //   - Nand(False, Unknown)   => True
-//   - Nand(False, True)  => True
+//   - Nand(False, True)      => True
 //   - Nand(Unknown, False)   => True
-//   - Nand(Unknown, Unknown)     => Unknown
+//   - Nand(Unknown, Unknown) => Unknown
 //   - Nand(Unknown, True)    => Unknown
-//   - Nand(True, False)  => True
+//   - Nand(True, False)      => True
 //   - Nand(True, Unknown)    => Unknown
-//   - Nand(True, True)   => False
+//   - Nand(True, True)       => False
 //
 // Example usage:
 //
@@ -503,15 +520,15 @@ func (t Trit) Nand(trit Trit) Trit {
 // Nor performs a logical NOR operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for NOR:
-//   - Nor(False, False) => True
+//   - Nor(False, False)     => True
 //   - Nor(False, Unknown)   => Unknown
-//   - Nor(False, True)  => False
+//   - Nor(False, True)      => False
 //   - Nor(Unknown, False)   => Unknown
-//   - Nor(Unknown, Unknown)     => Unknown
+//   - Nor(Unknown, Unknown) => Unknown
 //   - Nor(Unknown, True)    => False
-//   - Nor(True, False)  => False
+//   - Nor(True, False)      => False
 //   - Nor(True, Unknown)    => False
-//   - Nor(True, True)   => False
+//   - Nor(True, True)       => False
 //
 // Example usage:
 //
@@ -526,15 +543,15 @@ func (t Trit) Nor(trit Trit) Trit {
 // Nxor performs a logical XNOR operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for XNOR:
-//   - Nxor(False, False) => True
+//   - Nxor(False, False)     => True
 //   - Nxor(False, Unknown)   => Unknown
-//   - Nxor(False, True)  => False
+//   - Nxor(False, True)      => False
 //   - Nxor(Unknown, False)   => Unknown
-//   - Nxor(Unknown, Unknown)     => Unknown
+//   - Nxor(Unknown, Unknown) => Unknown
 //   - Nxor(Unknown, True)    => Unknown
-//   - Nxor(True, False)  => False
+//   - Nxor(True, False)      => False
 //   - Nxor(True, Unknown)    => Unknown
-//   - Nxor(True, True)  => True
+//   - Nxor(True, True)       => True
 //
 // Example usage:
 //
@@ -549,15 +566,15 @@ func (t Trit) Nxor(trit Trit) Trit {
 // Min performs a logical MIN operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for MIN:
-//   - Min(False, False) => False
+//   - Min(False, False)     => False
 //   - Min(False, Unknown)   => False
-//   - Min(False, True)  => False
+//   - Min(False, True)      => False
 //   - Min(Unknown, False)   => False
-//   - Min(Unknown, Unknown)     => Unknown
+//   - Min(Unknown, Unknown) => Unknown
 //   - Min(Unknown, True)    => Unknown
-//   - Min(True, False)  => False
+//   - Min(True, False)      => False
 //   - Min(True, Unknown)    => Unknown
-//   - Min(True, True)   => True
+//   - Min(True, True)       => True
 //
 // Example usage:
 //
@@ -572,15 +589,15 @@ func (t Trit) Min(trit Trit) Trit {
 // Max performs a logical MAX operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for MAX:
-//   - Max(False, False) => False
+//   - Max(False, False)     => False
 //   - Max(False, Unknown)   => Unknown
-//   - Max(False, True)  => True
+//   - Max(False, True)      => True
 //   - Max(Unknown, False)   => Unknown
-//   - Max(Unknown, Unknown)     => Unknown
+//   - Max(Unknown, Unknown) => Unknown
 //   - Max(Unknown, True)    => True
-//   - Max(True, False)  => True
+//   - Max(True, False)      => True
 //   - Max(True, Unknown)    => True
-//   - Max(True, True)   => True
+//   - Max(True, True)       => True
 //
 // Example usage:
 //
@@ -595,15 +612,15 @@ func (t Trit) Max(trit Trit) Trit {
 // Imp performs a logical IMP operation between two Trit values and returns
 // the result. This function applies the following rules based on the truth
 // table for IMP:
-//   - Imp(False, False) => True
+//   - Imp(False, False)     => True
 //   - Imp(False, Unknown)   => True
-//   - Imp(False, True)  => True
+//   - Imp(False, True)      => True
 //   - Imp(Unknown, False)   => Unknown
-//   - Imp(Unknown, Unknown)     => True
+//   - Imp(Unknown, Unknown) => True
 //   - Imp(Unknown, True)    => True
-//   - Imp(True, False)  => False
+//   - Imp(True, False)      => False
 //   - Imp(True, Unknown)    => Unknown
-//   - Imp(True, True)   => True
+//   - Imp(True, True)       => True
 //
 // Example usage:
 //
@@ -621,4 +638,83 @@ func (t Trit) Imp(trit Trit) Trit {
 	}
 
 	return False
+}
+
+// Nimp performs a logical NIMP operation between two Trit values and returns
+// the result. This function applies the following rules based on the truth
+// table for NIMP:
+//   - Nimp(False, False)     => False
+//   - Nimp(False, Unknown)   => False
+//   - Nimp(False, True)      => False
+//   - Nimp(Unknown, False)   => Unknown
+//   - Nimp(Unknown, Unknown) => False
+//   - Nimp(Unknown, True)    => False
+//   - Nimp(True, False)      => True
+//   - Nimp(True, Unknown)    => Unknown
+//   - Nimp(True, True)       => False
+//
+// Example usage:
+//
+//	a := trit.True
+//	b := trit.False
+//	result := a.Nimp(b)
+//	fmt.Println(result.String()) // Output: True
+func (t Trit) Nimp(trit Trit) Trit {
+	return t.Imp(trit).Not()
+}
+
+// Eq performs a logical EQ operation between two Trit values and returns
+// the result. This function applies the following rules based on the truth
+// table for EQ:
+//   - Eq(False, False)     => True
+//   - Eq(False, Unknown)   => Unknown
+//   - Eq(False, True)      => False
+//   - Eq(Unknown, False)   => Unknown
+//   - Eq(Unknown, Unknown) => Unknown
+//   - Eq(Unknown, True)    => Unknown
+//   - Eq(True, False)      => False
+//   - Eq(True, Unknown)    => Unknown
+//   - Eq(True, True)       => True
+//
+// Example usage:
+//
+//	a := trit.True
+//	b := trit.False
+//	result := a.Eq(b)
+//	fmt.Println(result.String()) // Output: False
+//
+// Equivalence (EQ): Also known as "if and only if" or "iff".
+// It's True if both Trit are the same (either both True or both False),
+// and False if they are different.
+func (t Trit) Eq(trit Trit) Trit {
+	if t.Val() == Unknown || trit.Val() == Unknown {
+		return Unknown
+	} else if t.Val() == trit.Val() {
+		return True
+	}
+
+	return False
+}
+
+// Neq performs a logical NEQ operation between two Trit values and returns
+// the result. This function applies the following rules based on the truth
+// table for NEQ:
+//   - Neq(False, False)     => False
+//   - Neq(False, Unknown)   => Unknown
+//   - Neq(False, True)      => True
+//   - Neq(Unknown, False)   => Unknown
+//   - Neq(Unknown, Unknown) => Unknown
+//   - Neq(Unknown, True)    => Unknown
+//   - Neq(True, False)      => True
+//   - Neq(True, Unknown)    => Unknown
+//   - Neq(True, True)       => False
+//
+// Example usage:
+//
+//	a := trit.True
+//	b := trit.False
+//	result := a.Neq(b)
+//	fmt.Println(result.String()) // Output: True
+func (t Trit) Neq(trit Trit) Trit {
+	return t.Eq(trit).Not()
 }

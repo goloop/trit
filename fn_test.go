@@ -707,9 +707,96 @@ func TestImp(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Imp(test.b)
+			result := Imp(test.a, test.b)
 			if result != test.out {
 				t.Errorf("Imp did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestNimp tests the Nimp function.
+func TestNimp(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Nimp should return False for (False, False)", False, False, False},
+		{"Nimp should return False for (False, Unknown)", False, Unknown, False},
+		{"Nimp should return False for (False, True)", False, True, False},
+		{"Nimp should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Nimp should return False for (Unknown, Unknown)", Unknown, Unknown, False},
+		{"Nimp should return False for (Unknown, True)", Unknown, True, False},
+		{"Nimp should return True for (True, False)", True, False, True},
+		{"Nimp should return Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Nimp should return False for (True, True)", True, True, False},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Nimp(test.a, test.b)
+			if result != test.out {
+				t.Errorf("Nimp did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestEq tests the Eq function.
+func TestEq(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Eq should return True for (False, False)", False, False, True},
+		{"Eq should return Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Eq should return False for (False, True)", False, True, False},
+		{"Eq should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Eq should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Eq should return Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Eq should return False for (True, False)", True, False, False},
+		{"Eq should return Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Eq should return True for (True, True)", True, True, True},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Eq(test.a, test.b)
+			if result != test.out {
+				t.Errorf("Eq did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestNeq tests the Neq function.
+func TestNeq(t *testing.T) {
+	tests := []struct {
+		name string
+		a    Trit
+		b    Trit
+		out  Trit
+	}{
+		{"Neq should return False for (False, False)", False, False, False},
+		{"Neq should return Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{"Neq should return True for (False, True)", False, True, True},
+		{"Neq should return Unknown for (Unknown, False)", Unknown, False, Unknown},
+		{"Neq should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{"Neq should return Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{"Neq should return True for (True, False)", True, False, True},
+		{"Neq should return Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{"Neq should return False for (True, True)", True, True, False},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Neq(test.a, test.b)
+			if result != test.out {
+				t.Errorf("Neq did not return %v for (%v, %v)", test.out, test.a, test.b)
 			}
 		})
 	}
