@@ -4,6 +4,122 @@ import (
 	"testing"
 )
 
+// TestIsFalse tests the IsFalse function.
+func TestIsFalse(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		out  bool
+	}{
+		{"-1 should return true", -1, true},
+		{"1 should return false", 1, false},
+		{"0 should return false", 0, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := IsFalse(test.in)
+			if result != test.out {
+				t.Errorf("isFalse did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestIsNil tests the IsNil function.
+func TestIsNil(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		out  bool
+	}{
+		{"-1 should return false", -1, false},
+		{"1 should return false", 1, false},
+		{"0 should return true", 0, true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := IsNil(test.in)
+			if result != test.out {
+				t.Errorf("isNil did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestIsTrue tests the IsTrue function.
+func TestIsTrue(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		out  bool
+	}{
+		{"-1 should return false", -1, false},
+		{"1 should return true", 1, true},
+		{"0 should return false", 0, false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := IsTrue(test.in)
+			if result != test.out {
+				t.Errorf("isTrue did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestSet tests the Set function.
+func TestSet(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		out  Trit
+	}{
+		{"-1 should return False", -1, False},
+		{"1 should return True", 1, True},
+		{"0 should return Nil", 0, Nil},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var trit Trit
+			result := Set(&trit, test.in)
+			if result != test.out {
+				t.Errorf("Set did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestAny tests the Any function.
+func TestAny(t *testing.T) {
+	tests := []struct {
+		name string
+		in   float64
+		out  Trit
+	}{
+		{"-0.1 should return False", -0.1, False},
+		{"7.7 should return True", 7.7, True},
+		{"0.0 should return Nil", 0.0, Nil},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Any(test.in)
+			if result != test.out {
+				t.Errorf("Any did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
 // TestLogicToTrit tests the logicToTrit function.
 func TestLogicToTrit(t *testing.T) {
 	// Numbers.

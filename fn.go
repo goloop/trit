@@ -80,6 +80,50 @@ func Default[T Logicable](t *Trit, v T) Trit {
 	return *t
 }
 
+// IsFalse checks if the trit-object is False.
+//
+// See Trit.IsFalse() for more information.
+func IsFalse[T Logicable](t T) bool {
+	trit := logicToTrit(t)
+	return trit.IsFalse()
+}
+
+// IsNil checks if the trit-object is Nil.
+//
+// See Trit.IsNil() for more information.
+func IsNil[T Logicable](t T) bool {
+	trit := logicToTrit(t)
+	return trit.IsNil()
+}
+
+// IsTrue checks if the trit-object is True.
+//
+// See Trit.IsTrue() for more information.
+func IsTrue[T Logicable](t T) bool {
+	trit := logicToTrit(t)
+	return trit.IsTrue()
+}
+
+// Set sets the value of the trit-object.
+//
+// See Trit.Set() for more information.
+func Set[T Logicable](t *Trit, v T) Trit {
+	trit := logicToTrit(v)
+	*t = trit
+	return *t
+}
+
+// Any converts the any Logicable type to Trit.
+//
+// Example usage:
+//
+//	t := trit.Any(true)
+//	fmt.Println(t.String()) // Output: True
+func Any[T Logicable](v T) Trit {
+	trit := logicToTrit(v)
+	return trit
+}
+
 // Not performs a logical NOT operation on a Trit-Like value and
 // returns the result as Trit.
 //

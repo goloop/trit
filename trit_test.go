@@ -110,8 +110,8 @@ func TestClean(t *testing.T) {
 	})
 }
 
-// TestIsFalse tests the IsFalse method.
-func TestIsFalse(t *testing.T) {
+// TestMethodIsFalse tests the IsFalse method.
+func TestMethodIsFalse(t *testing.T) {
 	t.Run("IsFalse should return true for False", func(t *testing.T) {
 		tr := False
 		if !tr.IsFalse() {
@@ -134,8 +134,8 @@ func TestIsFalse(t *testing.T) {
 	})
 }
 
-// TestIsNil tests the IsNil method.
-func TestIsNil(t *testing.T) {
+// TestMethodIsNil tests the IsNil method.
+func TestMethodIsNil(t *testing.T) {
 	t.Run("IsNil should return false for False", func(t *testing.T) {
 		tr := False
 		if tr.IsNil() {
@@ -158,8 +158,8 @@ func TestIsNil(t *testing.T) {
 	})
 }
 
-// TestIsTrue tests the IsTrue method.
-func TestIsTrue(t *testing.T) {
+// TestMethodIsTrue tests the IsTrue method.
+func TestMethodIsTrue(t *testing.T) {
 	t.Run("IsTrue should return false for False", func(t *testing.T) {
 		tr := False
 		if tr.IsTrue() {
@@ -182,8 +182,8 @@ func TestIsTrue(t *testing.T) {
 	})
 }
 
-// TestSet tests the Set method.
-func TestSet(t *testing.T) {
+// TestMethodSet tests the Set method.
+func TestMethodSet(t *testing.T) {
 	t.Run("Set value to False for negative integer", func(t *testing.T) {
 		tr := Trit(0)
 		tr.Set(-2)
