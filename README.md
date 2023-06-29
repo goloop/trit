@@ -189,7 +189,7 @@ Here's an explanation of some key parts of this package:
 
   - Provides methods default state (like Default, TrueIfUnknown, FalseIFUnknown etc.,) that check if the value of a Trit is Unknown and change its value based on the method called. For instance, TrueIfUnknown will set the Trit to True if its current value is Unknown.
 
-  - There are some methods (like IsFalse, IsUnknown, IsTrue, IsConfidence etc.,) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
+  - There are some methods (like IsFalse, IsUnknown, IsTrue, etc.,) that check the state of a Trit and return a boolean indicating if the Trit is in the corresponding state.
 
   - Some methods perform various operations like assigning a value to a Trit (Set), returning the normalized value of a Trit (Val), normalizing the Trit in place (Norm), getting the integer representation of the Trit (Int), and getting the string representation of the Trit (String).
 

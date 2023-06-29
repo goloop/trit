@@ -4,6 +4,50 @@ import (
 	"testing"
 )
 
+// TestParalellTasks tests the ParallelTasks function.
+func TestParallelTasks(t *testing.T) {
+	tests := []struct {
+		name   string
+		inputs []int
+		want   int
+	}{
+		{
+			name:   "No input values",
+			inputs: []int{},
+			want:   parallelTasks, // should return current value of pt
+		},
+		{
+			name:   "Input values sum to less than 0",
+			inputs: []int{-10, -5},
+			want:   1, // should be set to 1
+		},
+		{
+			name:   "Input values sum to 0",
+			inputs: []int{-5, 5},
+			want:   1, // should be set to 1
+		},
+		{
+			name:   "Input values sum to more than maxParallelTasks",
+			inputs: []int{10, maxParallelTasks + 1},
+			want:   maxParallelTasks, // should be set to maxParallelTasks
+		},
+		{
+			name:   "Input values sum to valid value",
+			inputs: []int{3, 4},
+			want:   7, // should be set to the sum of the inputs
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := ParallelTasks(test.inputs...)
+			if got != test.want {
+				t.Errorf("ParallelTasks() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}
+
 // TestIsFalse tests the IsFalse function.
 func TestIsFalse(t *testing.T) {
 	tests := []struct {
@@ -122,6 +166,7 @@ func TestConvert(t *testing.T) {
 
 // TestAll tests the All function.
 func TestAll(t *testing.T) {
+	ParallelTasks(2)
 	tests := []struct {
 		name string
 		in   []Trit
@@ -135,6 +180,27 @@ func TestAll(t *testing.T) {
 		{"[0, 1, 1] should return False", []Trit{False, True, True}, False},
 		{"[1, 0, 0] should return False", []Trit{True, False, False}, False},
 		{"[1, 1, 0] should return False", []Trit{True, True, False}, False},
+		{
+			name: "Just empty list",
+			in:   []Trit{},
+			out:  False,
+		},
+		{
+			name: "A very large list for testing goroutines",
+			in: []Trit{
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, Unknown, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+			},
+			out: False,
+		},
 	}
 
 	for _, test := range tests {
@@ -150,6 +216,7 @@ func TestAll(t *testing.T) {
 
 // TestAny tests the Any function.
 func TestAny(t *testing.T) {
+	ParallelTasks(2)
 	tests := []struct {
 		name string
 		in   []Trit
@@ -163,6 +230,27 @@ func TestAny(t *testing.T) {
 		{"[0, 1, 1] should return True", []Trit{False, True, True}, True},
 		{"[1, 0, 0] should return True", []Trit{True, False, False}, True},
 		{"[1, 1, 0] should return True", []Trit{True, True, False}, True},
+		{
+			name: "Just empty list",
+			in:   []Trit{},
+			out:  False,
+		},
+		{
+			name: "A very large list for testing goroutines",
+			in: []Trit{
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, True, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+				False, False, False, False, False, False, False, False, False,
+			},
+			out: True,
+		},
 	}
 
 	for _, test := range tests {
@@ -797,6 +885,73 @@ func TestNeq(t *testing.T) {
 			result := Neq(test.a, test.b)
 			if result != test.out {
 				t.Errorf("Neq did not return %v for (%v, %v)", test.out, test.a, test.b)
+			}
+		})
+	}
+}
+
+// TestKnown tests the Known function.
+func TestKnown(t *testing.T) {
+	ParallelTasks(2)
+	tests := []struct {
+		name string
+		in   []Trit
+		out  Trit
+	}{
+		{
+			name: "Known should return True for (True, True, True)",
+			in:   []Trit{True, True, True},
+			out:  True,
+		},
+		{
+			name: "Known should return True for (True, True, False)",
+			in:   []Trit{True, True, False},
+			out:  True,
+		},
+		{
+			name: "Known should return True for (False, False, False)",
+			in:   []Trit{False, False, False},
+			out:  True,
+		},
+		{
+			name: "Known should return False for (False, Unknown, True)",
+			in:   []Trit{False, Unknown, True},
+			out:  False,
+		},
+		{
+			name: "Known should return False for (Unknown, Unknown)",
+			in:   []Trit{Unknown, Unknown},
+			out:  False,
+		},
+		{
+			name: "Just empty list",
+			in:   []Trit{},
+			out:  False,
+		},
+		{
+			name: "A very large list for testing goroutines",
+			in: []Trit{
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, False, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, False, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, Unknown, True, True, True, True, True, True,
+				True, True, True, True, True, True, True, True, True, True,
+				True, True, True, True, True, True, False, False, False,
+			},
+			out: False,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Known(test.in...)
+			if result != test.out {
+				t.Errorf("Known did not return %v for %v",
+					test.out, test.in)
 			}
 		})
 	}

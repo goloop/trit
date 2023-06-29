@@ -1,7 +1,18 @@
 package trit
 
 import (
+	"context"
 	"reflect"
+	"runtime"
+	"sync"
+)
+
+var (
+	// The parallelTasks the number of parallel tasks.
+	parallelTasks = 1
+
+	// The maxParallelTasks is the maximum number of parallel tasks.
+	maxParallelTasks = runtime.NumCPU() * 3
 )
 
 // Logicable is a special data type from which to determine the state of Trit
@@ -11,6 +22,66 @@ type Logicable interface {
 		int | int8 | int16 | int32 | int64 |
 		uint | uint8 | uint16 | uint32 | uint64 |
 		float32 | float64
+}
+
+// The logicFoundValue is a helper struct that holds a boolean value
+// and a Mutex to protect it from concurrent access.
+//
+// They are used in the In function to detect the desired result
+// in a separate goroutine.
+type logicFoundValue struct {
+	m     sync.Mutex
+	value Trit
+}
+
+// SetValue sets a new value for the Found. It locks the Mutex before
+// changing the value and unlocks it after the change is complete.
+func (f *logicFoundValue) SetValue(value Trit) {
+	f.m.Lock()
+	defer f.m.Unlock()
+	f.value = value
+}
+
+// GetValue retrieves the current value of the Found. It locks the Mutex
+// before reading the value and unlocks it after the read is complete.
+func (f *logicFoundValue) GetValue() Trit {
+	f.m.Lock()
+	defer f.m.Unlock()
+	return f.value
+}
+
+// The init initializes the randomGenerator variable.
+func init() {
+	parallelTasks = runtime.NumCPU() * 2
+}
+
+// ParallelTasks returns the number of parallel tasks.
+//
+// If the function is called without parameters, it returns the
+// current value of parallelTasks.
+//
+// A function can receive one or more values for parallelTasks,
+// these values are added together to form the final result for
+// parallelTasks. If the new value for parallelTasks is less than
+// or equal to zero - it will be set to 1, if it is greater than
+// maxParallelTasks - it will be set to maxParallelTasks.
+func ParallelTasks(v ...int) int {
+	if len(v) > 0 {
+		n := 0
+		for _, value := range v {
+			n += value
+		}
+
+		if n <= 0 {
+			parallelTasks = 1
+		} else if n > maxParallelTasks {
+			parallelTasks = maxParallelTasks
+		} else {
+			parallelTasks = n
+		}
+	}
+
+	return parallelTasks
 }
 
 // The logicToTrit function converts any logic type to Trit.
@@ -133,14 +204,65 @@ func Convert[T Logicable](v T) Trit {
 //	t := trit.All(trit.True, trit.True, trit.True)
 //	fmt.Println(t.String()) // Output: True
 func All[T Logicable](t ...T) Trit {
-	for _, v := range t {
-		trit := logicToTrit(v)
-		if trit.IsFalse() {
-			return False
+	var wg sync.WaitGroup
+
+	// Will use context to stop the rest of the goroutines
+	// if the value has already been found.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	p := parallelTasks
+	found := &logicFoundValue{value: True}
+
+	// If the length of the slice is less than or equal to
+	// the number of parallel tasks, then we do not need
+	// to use goroutines.
+	if l := len(t); l == 0 {
+		return False
+	} else if l < p*2 {
+		for _, v := range t {
+			trit := logicToTrit(v)
+			if trit.IsFalse() || trit.IsUnknown() {
+				return False
+			}
 		}
+
+		return True
 	}
 
-	return True
+	chunkSize := len(t) / p
+	for i := 0; i < p; i++ {
+		wg.Add(1)
+
+		start := i * chunkSize
+		end := start + chunkSize
+		if i == p-1 {
+			end = len(t)
+		}
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			for _, b := range t[start:end] {
+				trit := logicToTrit(b)
+				// Check if the context has been cancelled.
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				if trit.IsFalse() || trit.IsUnknown() {
+					found.SetValue(False)
+					cancel() // stop all other goroutines
+					return
+				}
+			}
+		}(start, end)
+	}
+
+	wg.Wait()
+	return found.GetValue()
 }
 
 // Any returns True if any of the trit-objects are True.
@@ -150,14 +272,66 @@ func All[T Logicable](t ...T) Trit {
 //	t := trit.Any(trit.True, trit.False, trit.False)
 //	fmt.Println(t.String()) // Output: True
 func Any[T Logicable](t ...T) Trit {
-	for _, v := range t {
-		trit := logicToTrit(v)
-		if trit.IsTrue() {
-			return True
+	var wg sync.WaitGroup
+
+	// Will use context to stop the rest of the goroutines
+	// if the value has already been found.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	p := parallelTasks
+	found := &logicFoundValue{value: False}
+
+	// If the length of the slice is less than or equal to
+	// the number of parallel tasks, then we do not need
+	// to use goroutines.
+	if l := len(t); l == 0 {
+		return False
+	} else if l < p*2 {
+		for _, v := range t {
+			trit := logicToTrit(v)
+			if trit.IsTrue() {
+				return True
+			}
 		}
+
+		return False
 	}
 
-	return False
+	chunkSize := len(t) / p
+	for i := 0; i < p; i++ {
+		wg.Add(1)
+
+		start := i * chunkSize
+		end := start + chunkSize
+		if i == p-1 {
+			end = len(t)
+		}
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			for _, b := range t[start:end] {
+				trit := logicToTrit(b)
+
+				// Check if the context has been cancelled.
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				if trit.IsTrue() {
+					found.SetValue(True)
+					cancel() // stop all other goroutines
+					return
+				}
+			}
+		}(start, end)
+	}
+
+	wg.Wait()
+	return found.GetValue()
 }
 
 // None returns True if none of the trit-objects are True.
@@ -331,6 +505,79 @@ func Neq[T, U Logicable](a T, b U) Trit {
 	ta := logicToTrit(a)
 	tb := logicToTrit(b)
 	return ta.Neq(tb)
+}
+
+// Known returns boolean true if all Trit-Like values has definiteness,
+// i.e. is either True or False.
+//
+// Example usage:
+//
+//	a := trit.Known(trit.True, trit.False, trit.Unknown)
+//	fmt.Println(a.String()) // Output: False
+//
+//	b := trit.Known(trit.True, trit.True, trit.False)
+//	fmt.Println(b.String()) // Output: True
+func Known[T Logicable](ts ...T) Trit {
+	var wg sync.WaitGroup
+
+	// Will use context to stop the rest of the goroutines
+	// if the value has already been found.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	p := parallelTasks
+	found := &logicFoundValue{value: True}
+
+	// If the length of the slice is less than or equal to
+	// the number of parallel tasks, then we do not need
+	// to use goroutines.
+	if l := len(ts); l == 0 {
+		return False
+	} else if l < p*2 {
+		for _, t := range ts {
+			trit := logicToTrit(t)
+			if trit == Unknown {
+				return False
+			}
+		}
+
+		return True
+	}
+
+	chunkSize := len(ts) / p
+	for i := 0; i < p; i++ {
+		wg.Add(1)
+
+		start := i * chunkSize
+		end := start + chunkSize
+		if i == p-1 {
+			end = len(ts)
+		}
+
+		go func(start, end int) {
+			defer wg.Done()
+
+			for _, b := range ts[start:end] {
+				trit := logicToTrit(b)
+
+				// Check if the context has been cancelled.
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				if trit.IsUnknown() {
+					found.SetValue(False)
+					cancel() // stop all other goroutines
+					return
+				}
+			}
+		}(start, end)
+	}
+
+	wg.Wait()
+	return found.GetValue()
 }
 
 // IsConfidence returns boolean true if all Trit-Like values has definiteness,
