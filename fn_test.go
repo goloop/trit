@@ -167,6 +167,7 @@ func TestConvert(t *testing.T) {
 // TestAll tests the All function.
 func TestAll(t *testing.T) {
 	ParallelTasks(2)
+	minLoadPeGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit
@@ -217,6 +218,7 @@ func TestAll(t *testing.T) {
 // TestAny tests the Any function.
 func TestAny(t *testing.T) {
 	ParallelTasks(2)
+	minLoadPeGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit
@@ -893,6 +895,7 @@ func TestNeq(t *testing.T) {
 // TestKnown tests the Known function.
 func TestKnown(t *testing.T) {
 	ParallelTasks(2)
+	minLoadPeGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit

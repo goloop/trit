@@ -13,6 +13,16 @@ var (
 
 	// The maxParallelTasks is the maximum number of parallel tasks.
 	maxParallelTasks = runtime.NumCPU() * 3
+
+	// The minLoadPerGoroutine is the minimum slice size for processing
+	// in an individual goroutine. Essentially, it delineates the threshold
+	// at which it becomes worthwhile to divide the slice processing amongst
+	// multiple goroutines. If each goroutine isn't handling a sufficiently
+	// large subslice, the overhead of goroutine creation and management
+	// may outweigh the benefits of concurrent processing. This variable
+	// specifies the minimum number of iterations per goroutine to ensure
+	// an efficient division of labor.
+	minLoadPeGoroutine = 1024
 )
 
 // Logicable is a special data type from which to determine the state of Trit
@@ -215,11 +225,11 @@ func All[T Logicable](t ...T) Trit {
 	found := &logicFoundValue{value: True}
 
 	// If the length of the slice is less than or equal to
-	// the number of parallel tasks, then we do not need
+	// the minLoadPeGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(t); l == 0 {
 		return False
-	} else if l < p*2 {
+	} else if l/p < minLoadPeGoroutine {
 		for _, v := range t {
 			trit := logicToTrit(v)
 			if trit.IsFalse() || trit.IsUnknown() {
@@ -283,11 +293,11 @@ func Any[T Logicable](t ...T) Trit {
 	found := &logicFoundValue{value: False}
 
 	// If the length of the slice is less than or equal to
-	// the number of parallel tasks, then we do not need
+	// the minLoadPeGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(t); l == 0 {
 		return False
-	} else if l < p*2 {
+	} else if l/p < minLoadPeGoroutine {
 		for _, v := range t {
 			trit := logicToTrit(v)
 			if trit.IsTrue() {
@@ -529,11 +539,11 @@ func Known[T Logicable](ts ...T) Trit {
 	found := &logicFoundValue{value: True}
 
 	// If the length of the slice is less than or equal to
-	// the number of parallel tasks, then we do not need
+	// the minLoadPeGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(ts); l == 0 {
 		return False
-	} else if l < p*2 {
+	} else if l/p < minLoadPeGoroutine {
 		for _, t := range ts {
 			trit := logicToTrit(t)
 			if trit == Unknown {
