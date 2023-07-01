@@ -25,6 +25,10 @@ var (
 	// specifies the minimum number of iterations per goroutine to ensure
 	// an efficient division of labor.
 	minLoadPerGoroutine = 1024
+
+	// This line asserts at compile time that the type *Trit
+	// implements the Tritter interface.
+	_ Tritter = (*Trit)(nil)
 )
 
 // Logicable is a special data type from which to determine the state of Trit
@@ -41,6 +45,8 @@ type Tritter interface {
 	IsTrue() bool
 	IsFalse() bool
 	IsUnknown() bool
+	Int() int
+	String() string
 }
 
 // The logicFoundValue is a helper struct that holds a boolean value
