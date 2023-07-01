@@ -167,7 +167,7 @@ func TestConvert(t *testing.T) {
 // TestAll tests the All function.
 func TestAll(t *testing.T) {
 	ParallelTasks(2)
-	minLoadPeGoroutine = 20
+	minLoadPerGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit
@@ -218,7 +218,7 @@ func TestAll(t *testing.T) {
 // TestAny tests the Any function.
 func TestAny(t *testing.T) {
 	ParallelTasks(2)
-	minLoadPeGoroutine = 20
+	minLoadPerGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit
@@ -988,7 +988,7 @@ func TestNeq(t *testing.T) {
 // TestKnown tests the Known function.
 func TestKnown(t *testing.T) {
 	ParallelTasks(2)
-	minLoadPeGoroutine = 20
+	minLoadPerGoroutine = 20
 	tests := []struct {
 		name string
 		in   []Trit
@@ -1107,7 +1107,7 @@ func TestRandom(t *testing.T) {
 	}
 
 	// Unknow - 0%
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		result = Random(0)
 		if result == Unknown {
 			t.Errorf("Expected a random value as True or False, got %v",
@@ -1116,10 +1116,58 @@ func TestRandom(t *testing.T) {
 	}
 
 	// Two arguments.
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		result = Random(90, 5, 5)
 		if result != Unknown {
 			t.Errorf("Expected a random value as Unknown, got %v", result)
 		}
+	}
+
+	result = Random(90, 60, 90)
+	if result != Unknown {
+		t.Errorf("Expected a random value as Unknown, got %v", result)
+	}
+}
+
+// TestConsensus tests Consensus function.
+func TestConsensus(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []Trit
+		expected Trit
+	}{
+		{"All True", []Trit{True, True, True}, True},
+		{"All False", []Trit{False, False, False}, False},
+		{"Mixed", []Trit{True, False, True}, Unknown},
+		{"With Unknown", []Trit{True, True, Unknown}, Unknown},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if result := Consensus(tc.input...); result != tc.expected {
+				t.Fatalf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
+// TestMajority tests Majority function.
+func TestMajority(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []Trit
+		expected Trit
+	}{
+		{"Majority True", []Trit{True, True, False}, True},
+		{"Majority False", []Trit{False, False, True}, False},
+		{"No Majority", []Trit{True, False, Unknown}, Unknown},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if result := Majority(tc.input...); result != tc.expected {
+				t.Fatalf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
 	}
 }

@@ -24,7 +24,7 @@ var (
 	// may outweigh the benefits of concurrent processing. This variable
 	// specifies the minimum number of iterations per goroutine to ensure
 	// an efficient division of labor.
-	minLoadPeGoroutine = 1024
+	minLoadPerGoroutine = 1024
 )
 
 // Logicable is a special data type from which to determine the state of Trit
@@ -234,11 +234,11 @@ func All[T Logicable](t ...T) Trit {
 	found := &logicFoundValue{value: True}
 
 	// If the length of the slice is less than or equal to
-	// the minLoadPeGoroutine, then we do not need
+	// the minLoadPerGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(t); l == 0 {
 		return False
-	} else if l/p < minLoadPeGoroutine {
+	} else if l/p < minLoadPerGoroutine {
 		for _, v := range t {
 			trit := logicToTrit(v)
 			if trit.IsFalse() || trit.IsUnknown() {
@@ -302,11 +302,11 @@ func Any[T Logicable](t ...T) Trit {
 	found := &logicFoundValue{value: False}
 
 	// If the length of the slice is less than or equal to
-	// the minLoadPeGoroutine, then we do not need
+	// the minLoadPerGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(t); l == 0 {
 		return False
-	} else if l/p < minLoadPeGoroutine {
+	} else if l/p < minLoadPerGoroutine {
 		for _, v := range t {
 			trit := logicToTrit(v)
 			if trit.IsTrue() {
@@ -548,11 +548,11 @@ func Known[T Logicable](ts ...T) Trit {
 	found := &logicFoundValue{value: True}
 
 	// If the length of the slice is less than or equal to
-	// the minLoadPeGoroutine, then we do not need
+	// the minLoadPerGoroutine, then we do not need
 	// to use goroutines.
 	if l := len(ts); l == 0 {
 		return False
-	} else if l/p < minLoadPeGoroutine {
+	} else if l/p < minLoadPerGoroutine {
 		for _, t := range ts {
 			trit := logicToTrit(t)
 			if trit == Unknown {
@@ -663,4 +663,64 @@ func Random(up ...uint8) Trit {
 	}
 
 	return False
+}
+
+// Consensus returns True if all input trits are True, False if all are False,
+// and Unknown otherwise.
+//
+// Example usage:
+//
+//	t1, t2, t3 := trit.True, trit.True, trit.Unknown
+//	result := Consensus(t1, t2, t3)
+//	// result will be Unknown, as not all trits are the same
+func Consensus[T Logicable](trits ...T) Trit {
+	countT := 0
+	countF := 0
+	for _, x := range trits {
+		trit := logicToTrit(x)
+		switch trit.Val() {
+		case True:
+			countT++
+		case False:
+			countF++
+		default:
+			return Unknown
+		}
+	}
+	if countT == len(trits) {
+		return True
+	} else if countF == len(trits) {
+		return False
+	}
+
+	return Unknown
+}
+
+// Majority returns True if more than half of the input trits are True, False
+// if more than half are False, and Unknown otherwise.
+//
+// Example usage:
+//
+//	t1, t2, t3, t4 := trit.True, trit.True, trit.False, trit.Unknown
+//	result := Majority(t1, t2, t3, t4)
+//	// result will be True, as more than half of the trits are True
+func Majority[T Logicable](trits ...T) Trit {
+	countT := 0
+	countF := 0
+	for _, x := range trits {
+		trit := logicToTrit(x)
+		switch trit.Val() {
+		case True:
+			countT++
+		case False:
+			countF++
+		}
+	}
+	if countT > len(trits)/2 {
+		return True
+	} else if countF > len(trits)/2 {
+		return False
+	} else {
+		return Unknown
+	}
 }
