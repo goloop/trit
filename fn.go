@@ -2,9 +2,11 @@ package trit
 
 import (
 	"context"
+	"math/rand"
 	"reflect"
 	"runtime"
 	"sync"
+	"time"
 )
 
 var (
@@ -616,4 +618,49 @@ func IsConfidence[T Logicable](ts ...T) bool {
 	}
 
 	return true
+}
+
+// Random returns a random Trit value.
+// The function can accept an optional argument that indicates the
+// percentage probability of the occurrence of the Unknown event.
+//
+// Example usage:
+//
+//	 a := trit.Random()
+//	 fmt.Println(a.String()) // Output: True, False or Unknown
+//
+//	b := trit.Random(0)
+//	fmt.Println(b.String()) // Output: True or False
+//
+//	c := trit.Random(50)
+//	fmt.Println(c.String()) // Output: With a probability of 50% is Unknown
+func Random(up ...uint8) Trit {
+	// Determination of the probability of occurrence of the event Unknown.
+	var p int
+
+	if len(up) == 0 {
+		p = 33
+	} else {
+		for _, v := range up {
+			p += int(v)
+		}
+	}
+
+	if p > 100 {
+		p = 100
+	}
+
+	// Generate random value.
+	rand.Seed(time.Now().UnixNano())
+	value := rand.Intn(100)
+
+	if value < p {
+		return Unknown
+	}
+
+	if value < (100-p)/2 {
+		return True
+	}
+
+	return False
 }

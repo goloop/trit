@@ -556,7 +556,10 @@ func TestAnd(t *testing.T) {
 		{"Should be False for (False, Unknown)", False, Unknown, False},
 		{"Should be False for (False, True)", False, True, False},
 		{"Should be False for (Unknown, False)", Unknown, False, False},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Should be False for (True, False)", True, False, False},
 		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
@@ -567,7 +570,8 @@ func TestAnd(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := And(test.a, test.b)
 			if result != test.out {
-				t.Errorf("And did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("And did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -585,7 +589,10 @@ func TestOr(t *testing.T) {
 		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Should be True for (False, True)", False, True, True},
 		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be True for (Unknown, True)", Unknown, True, True},
 		{"Should be True for (True, False)", True, False, True},
 		{"Should be True for (True, Unknown)", True, Unknown, True},
@@ -596,7 +603,8 @@ func TestOr(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Or(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Or did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Or did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -614,7 +622,10 @@ func TestXor(t *testing.T) {
 		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Should be True for (False, True)", False, True, True},
 		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Should be True for (True, False)", True, False, True},
 		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
@@ -625,7 +636,8 @@ func TestXor(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Xor(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Xor did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Xor did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -643,7 +655,10 @@ func TestNand(t *testing.T) {
 		{"Should be True for (False, Unknown)", False, Unknown, True},
 		{"Should be True for (False, True)", False, True, True},
 		{"Should be True for (Unknown, False)", Unknown, False, True},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Should be True for (True, False)", True, False, True},
 		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
@@ -654,7 +669,8 @@ func TestNand(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Nand(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Nand did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Nand did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -672,7 +688,10 @@ func TestNor(t *testing.T) {
 		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Should be False for (False, True)", False, True, False},
 		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be False for (Unknown, True)", Unknown, True, False},
 		{"Should be False for (True, False)", True, False, False},
 		{"Should be False for (True, Unknown)", True, Unknown, False},
@@ -683,7 +702,8 @@ func TestNor(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Nor(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Nor did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Nor did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -701,7 +721,10 @@ func TestNxor(t *testing.T) {
 		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Should be False for (False, True)", False, True, False},
 		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Should be False for (True, False)", True, False, False},
 		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
@@ -712,7 +735,8 @@ func TestNxor(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Nxor(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Nxor did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Nxor did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -730,7 +754,10 @@ func TestMin(t *testing.T) {
 		{"Should be False for (False, Unknown)", False, Unknown, False},
 		{"Should be False for (False, True)", False, True, False},
 		{"Should be False for (Unknown, False)", Unknown, False, False},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
 		{"Should be False for (True, False)", True, False, False},
 		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
@@ -741,7 +768,8 @@ func TestMin(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Min(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Min did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Min did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -759,7 +787,10 @@ func TestMax(t *testing.T) {
 		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
 		{"Should be True for (False, True)", False, True, True},
 		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
+		{
+			"Should be Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
 		{"Should be True for (Unknown, True)", Unknown, True, True},
 		{"Should be True for (True, False)", True, False, True},
 		{"Should be True for (True, Unknown)", True, Unknown, True},
@@ -770,7 +801,8 @@ func TestMax(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Max(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Max did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Max did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -799,7 +831,8 @@ func TestImp(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Imp(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Imp did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Imp did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -813,22 +846,50 @@ func TestNimp(t *testing.T) {
 		b    Trit
 		out  Trit
 	}{
-		{"Nimp should return False for (False, False)", False, False, False},
-		{"Nimp should return False for (False, Unknown)", False, Unknown, False},
-		{"Nimp should return False for (False, True)", False, True, False},
-		{"Nimp should return Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Nimp should return False for (Unknown, Unknown)", Unknown, Unknown, False},
-		{"Nimp should return False for (Unknown, True)", Unknown, True, False},
-		{"Nimp should return True for (True, False)", True, False, True},
-		{"Nimp should return Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Nimp should return False for (True, True)", True, True, False},
+		{
+			"Nimp should return False for (False, False)",
+			False, False, False,
+		},
+		{
+			"Nimp should return False for (False, Unknown)",
+			False, Unknown, False,
+		},
+		{
+			"Nimp should return False for (False, True)",
+			False, True, False,
+		},
+		{
+			"Nimp should return Unknown for (Unknown, False)",
+			Unknown, False, Unknown,
+		},
+		{
+			"Nimp should return False for (Unknown, Unknown)",
+			Unknown, Unknown, False,
+		},
+		{
+			"Nimp should return False for (Unknown, True)",
+			Unknown, True, False,
+		},
+		{
+			"Nimp should return True for (True, False)",
+			True, False, True,
+		},
+		{
+			"Nimp should return Unknown for (True, Unknown)",
+			True, Unknown, Unknown,
+		},
+		{
+			"Nimp should return False for (True, True)",
+			True, True, False,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			result := Nimp(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Nimp did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Nimp did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -843,13 +904,28 @@ func TestEq(t *testing.T) {
 		out  Trit
 	}{
 		{"Eq should return True for (False, False)", False, False, True},
-		{"Eq should return Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{
+			"Eq should return Unknown for (False, Unknown)",
+			False, Unknown, Unknown,
+		},
 		{"Eq should return False for (False, True)", False, True, False},
-		{"Eq should return Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Eq should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
-		{"Eq should return Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{
+			"Eq should return Unknown for (Unknown, False)",
+			Unknown, False, Unknown,
+		},
+		{
+			"Eq should return Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
+		{
+			"Eq should return Unknown for (Unknown, True)",
+			Unknown, True, Unknown,
+		},
 		{"Eq should return False for (True, False)", True, False, False},
-		{"Eq should return Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{
+			"Eq should return Unknown for (True, Unknown)",
+			True, Unknown, Unknown,
+		},
 		{"Eq should return True for (True, True)", True, True, True},
 	}
 
@@ -857,7 +933,8 @@ func TestEq(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Eq(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Eq did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Eq did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -872,13 +949,28 @@ func TestNeq(t *testing.T) {
 		out  Trit
 	}{
 		{"Neq should return False for (False, False)", False, False, False},
-		{"Neq should return Unknown for (False, Unknown)", False, Unknown, Unknown},
+		{
+			"Neq should return Unknown for (False, Unknown)",
+			False, Unknown, Unknown,
+		},
 		{"Neq should return True for (False, True)", False, True, True},
-		{"Neq should return Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Neq should return Unknown for (Unknown, Unknown)", Unknown, Unknown, Unknown},
-		{"Neq should return Unknown for (Unknown, True)", Unknown, True, Unknown},
+		{
+			"Neq should return Unknown for (Unknown, False)",
+			Unknown, False, Unknown,
+		},
+		{
+			"Neq should return Unknown for (Unknown, Unknown)",
+			Unknown, Unknown, Unknown,
+		},
+		{
+			"Neq should return Unknown for (Unknown, True)",
+			Unknown, True, Unknown,
+		},
 		{"Neq should return True for (True, False)", True, False, True},
-		{"Neq should return Unknown for (True, Unknown)", True, Unknown, Unknown},
+		{
+			"Neq should return Unknown for (True, Unknown)",
+			True, Unknown, Unknown,
+		},
 		{"Neq should return False for (True, True)", True, True, False},
 	}
 
@@ -886,7 +978,8 @@ func TestNeq(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := Neq(test.a, test.b)
 			if result != test.out {
-				t.Errorf("Neq did not return %v for (%v, %v)", test.out, test.a, test.b)
+				t.Errorf("Neq did not return %v for (%v, %v)",
+					test.out, test.a, test.b)
 			}
 		})
 	}
@@ -983,7 +1076,7 @@ func TestIsConfidence(t *testing.T) {
 			out:  true,
 		},
 		{
-			name: "IsConfidence should return false for (False, Unknown, True)",
+			name: "IsConfidence should return false (False, Unknown, True)",
 			in:   []Trit{False, Unknown, True},
 			out:  false,
 		},
@@ -1002,5 +1095,31 @@ func TestIsConfidence(t *testing.T) {
 					test.out, test.in)
 			}
 		})
+	}
+}
+
+// TestRandom tests the Random function.
+func TestRandom(t *testing.T) {
+	// No arguments.
+	result := Random()
+	if !(result == False || result == True || result == Unknown) {
+		t.Errorf("Something went wrong with Random()")
+	}
+
+	// Unknow - 0%
+	for i := 0; i < 100; i++ {
+		result = Random(0)
+		if result == Unknown {
+			t.Errorf("Expected a random value as True or False, got %v",
+				result)
+		}
+	}
+
+	// Two arguments.
+	for i := 0; i < 100; i++ {
+		result = Random(90, 5, 5)
+		if result != Unknown {
+			t.Errorf("Expected a random value as Unknown, got %v", result)
+		}
 	}
 }
