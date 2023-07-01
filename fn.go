@@ -34,6 +34,13 @@ type Logicable interface {
 		float32 | float64
 }
 
+// Tritter is a special data type that implements the Trit interface.
+type Tritter interface {
+	IsTrue() bool
+	IsFalse() bool
+	IsUnknown() bool
+}
+
 // The logicFoundValue is a helper struct that holds a boolean value
 // and a Mutex to protect it from concurrent access.
 //
