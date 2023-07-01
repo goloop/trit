@@ -1,6 +1,7 @@
 package trit
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -141,8 +142,8 @@ func TestSet(t *testing.T) {
 	}
 }
 
-// TestConvert tests the Convert function.
-func TestConvert(t *testing.T) {
+// TestDefine tests the Define function.
+func TestDefine(t *testing.T) {
 	tests := []struct {
 		name string
 		in   float64
@@ -155,9 +156,32 @@ func TestConvert(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := Convert(test.in)
+			result := Define(test.in)
 			if result != test.out {
-				t.Errorf("Any did not return %v for %v",
+				t.Errorf("Define did not return %v for %v",
+					test.out, test.in)
+			}
+		})
+	}
+}
+
+// TestConvert tests the Convert function.
+func TestConvert(t *testing.T) {
+	tests := []struct {
+		name string
+		in   []int
+		out  []Trit
+	}{
+		{"-0.1 should return False", []int{-1, 1}, []Trit{False, True}},
+		{"7.7 should return True", []int{0, 1}, []Trit{Unknown, True}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := Convert(test.in...)
+			// DeepEqual is used to compare slices.
+			if !reflect.DeepEqual(result, test.out) {
+				t.Errorf("Convert did not return %v for %v",
 					test.out, test.in)
 			}
 		})

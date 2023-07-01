@@ -205,13 +205,30 @@ func Set[T Logicable](t *Trit, v T) Trit {
 	return *t
 }
 
-// Convert converts the any Logicable type to Trit.
+// Convert converts the any Logicable types to Trit.
 //
 // Example usage:
 //
-//	t := trit.Convert(true)
+//	tuf := trit.Convert(true, 0, -1)
+//	fmt.Println(tuf[0].String()) // Output: True
+//	fmt.Println(tuf[1].String()) // Output: Unknown
+//	fmt.Println(tuf[2].String()) // Output: False
+func Convert[T Logicable](v ...T) []Trit {
+	trit := make([]Trit, len(v))
+	for i, value := range v {
+		trit[i] = logicToTrit(value)
+	}
+
+	return trit
+}
+
+// Define converts the any Logicable type to Trit.
+//
+// Example usage:
+//
+//	t := trit.Define(true)
 //	fmt.Println(t.String()) // Output: True
-func Convert[T Logicable](v T) Trit {
+func Define[T Logicable](v T) Trit {
 	trit := logicToTrit(v)
 	return trit
 }
