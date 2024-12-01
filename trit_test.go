@@ -1,6 +1,9 @@
 package trit
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 // TestMethodDefault tests the Default method.
 func TestMethodDefault(t *testing.T) {
@@ -1078,4 +1081,112 @@ func TestMethodNeq(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestCanBeBool tests CanBeBool method.
+func TestCanBeBool(t *testing.T) {
+	tests := []struct {
+		name string
+		trit Trit
+		want bool
+	}{
+		{"True can be bool", True, true},
+		{"False can be bool", False, true},
+		{"Unknown cannot be bool", Unknown, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.trit.CanBeBool(); got != tt.want {
+				t.Errorf("CanBeBool() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestToBool tests ToBool method.
+func TestToBool(t *testing.T) {
+	tests := []struct {
+		name    string
+		trit    Trit
+		want    bool
+		wantErr bool
+	}{
+		{"True to true", True, true, false},
+		{"False to false", False, false, false},
+		{"Unknown returns error", Unknown, false, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.trit.ToBool()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ToBool() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && got != tt.want {
+				t.Errorf("ToBool() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestTritJSON tests Marshal/Unmarshal.
+func TestTritJSON(t *testing.T) {
+	type testStruct struct {
+		Value Trit `json:"value"`
+	}
+
+	tests := []struct {
+		name string
+		data testStruct
+		json string
+	}{
+		{
+			name: "True to JSON",
+			data: testStruct{Value: True},
+			json: `{"value":true}`,
+		},
+		{
+			name: "False to JSON",
+			data: testStruct{Value: False},
+			json: `{"value":false}`,
+		},
+		{
+			name: "Unknown to JSON",
+			data: testStruct{Value: Unknown},
+			json: `{"value":null}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := json.Marshal(tt.data)
+			if err != nil {
+				t.Errorf("Marshal() error = %v", err)
+				return
+			}
+			if string(got) != tt.json {
+				t.Errorf("Marshal() = %v, want %v", string(got), tt.json)
+			}
+
+			var result testStruct
+			err = json.Unmarshal([]byte(tt.json), &result)
+			if err != nil {
+				t.Errorf("Unmarshal() error = %v", err)
+				return
+			}
+			if result.Value != tt.data.Value {
+				t.Errorf("Unmarshal() = %v, want %v", result.Value, tt.data.Value)
+			}
+		})
+	}
+
+	t.Run("Invalid JSON", func(t *testing.T) {
+		var result testStruct
+		err := json.Unmarshal([]byte(`{"value":"invalid"}`), &result)
+		if err == nil {
+			t.Error("Expected error for invalid JSON value")
+		}
+	})
 }

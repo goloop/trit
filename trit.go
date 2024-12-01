@@ -1,98 +1,12 @@
-// Package trit provides three-level logic with the states False,
-// Unknown and True.
-//
-// Trit (short for "trinary digit") is an information unit that can take three
-// states, usually expressed as False, Unknown, and True. Trit is a fundamental
-// unit of trinary or ternary logic systems, including trinary computers and
-// balanced ternary systems. This package provides basic logic operations
-// including NOT, AND, OR, XOR, NAND, NOR, and XNOR.
-//
-// The three-level logic (trinary logic) has various applications in computer
-// science, particularly in scenarios where a "maybe" or "unknown" state
-// is beneficial, such as database systems and logic circuits.
-//
-// Truth Tables of Three-valued logic
-// (T=True, U=Unknown, F=False)
-//
-//	NA   - Not
-//	MA   - Modus Ponens Absorption
-//	LA   - Law of Absorption
-//	IA   - Implication Absorption
-//
-//	AND  - Logical AND
-//	OR   - Logical OR
-//	XOR  - Exclusive OR
-//
-//	NAND - Logical not AND
-//	NOR  - Logical not OR
-//	NXOR - Logical not XOR
-//
-//	IMP  - Implication in Lukasevich's Logic
-//	EQ   - If and only if
-//	MIN  - Minimum
-//
-//	NIMP - NOT IMP
-//	NEQ  - NOT EQ
-//	MAX  - Maximum
-//
-//	 A  | NA      A  | MA      A  | LA      A  | IA
-//	----+----    ----+----    ----+----    ----+----
-//	 F  |  T      F  |  F      F  |  F      F  |  F
-//	 U  |  U      U  |  T      U  |  F      U  |  T
-//	 T  |  F      T  |  T      T  |  T      T  |  F
-//
-//
-//	 A | B | AND       A | B |  OR       A | B | XOR
-//	---+---+------    ---+---+------    ---+---+------
-//	 F | F |  F        F | F |  F        F | F |  F
-//	 F | U |  F        F | U |  U        F | U |  U
-//	 F | T |  F        F | T |  T        F | T |  T
-//	 U | F |  F        U | F |  U        U | F |  U
-//	 U | U |  U        U | U |  U        U | U |  U
-//	 U | T |  U        U | T |  T        U | T |  U
-//	 T | F |  F        T | F |  T        T | F |  T
-//	 T | U |  U        T | U |  T        T | U |  U
-//	 T | T |  T        T | T |  T        T | T |  F
-//
-//
-//	 A | B | NAND      A | B | NOR       A | B | NXOR
-//	---+---+------    ---+---+------    ---+---+------
-//	 F | F |  T        F | F |  T        F | F |  T
-//	 F | U |  T        F | U |  U        F | U |  U
-//	 F | T |  T        F | T |  F        F | T |  F
-//	 U | F |  T        U | F |  U        U | F |  U
-//	 U | U |  U        U | U |  U        U | U |  U
-//	 U | T |  U        U | T |  F        U | T |  U
-//	 T | F |  T        T | F |  F        T | F |  F
-//	 T | U |  U        T | U |  F        T | U |  U
-//	 T | T |  F        T | T |  F        T | T |  T
-//
-//
-//	 A | B | IMP       A | B |  EQ       A | B | MIN
-//	---+---+------    ---+---+------    ---+---+------
-//	 F | F |  T        F | F |  T        F | F |  F
-//	 F | U |  T        F | U |  U        F | U |  F
-//	 F | T |  T        F | T |  F        F | T |  F
-//	 U | F |  U        U | F |  U        U | F |  F
-//	 U | U |  T        U | U |  U        U | U |  U
-//	 U | T |  T        U | T |  U        U | T |  U
-//	 T | F |  F        T | F |  F        T | F |  F
-//	 T | U |  U        T | U |  U        T | U |  U
-//	 T | T |  T        T | T |  T        T | T |  T
-//
-//
-//	 A | B | NIMP      A | B | NEQ       A | B | MAX
-//	---+---+------    ---+---+------    ---+---+------
-//	 F | F |  F        F | F |  F        F | F |  F
-//	 F | U |  F        F | U |  U        F | U |  U
-//	 F | T |  F        F | T |  T        F | T |  T
-//	 U | F |  U        U | F |  U        U | F |  U
-//	 U | U |  F        U | U |  U        U | U |  U
-//	 U | T |  F        U | T |  U        U | T |  T
-//	 T | F |  T        T | F |  T        T | F |  T
-//	 T | U |  U        T | U |  U        T | U |  T
-//	 T | T |  F        T | T |  F        T | T |  T
 package trit
+
+import (
+	"encoding/json"
+	"errors"
+)
+
+// ErrUnknownValue is returned when we try to convert Unknown to bool.
+var ErrUnknownValue = errors.New("cannot convert Unknown to bool")
 
 // Trit represents a trinary digit, which can take on three distinct
 // states: False, Unknown, or True. This type is a fundamental unit of
@@ -717,4 +631,51 @@ func (t Trit) Eq(trit Trit) Trit {
 //	fmt.Println(result.String()) // Output: True
 func (t Trit) Neq(trit Trit) Trit {
 	return t.Eq(trit).Not()
+}
+
+// CanBeBool checks if the value can be converted to bool.
+// Returns true only if the value is True or False.
+func (t Trit) CanBeBool() bool {
+	return !t.IsUnknown()
+}
+
+// ToBool converts Trit to bool.
+// Returns (false, ErrUnknownValue) if the value is Unknown.
+func (t Trit) ToBool() (bool, error) {
+	if !t.CanBeBool() {
+		return false, ErrUnknownValue
+	}
+	return t.IsTrue(), nil
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+// Unknown is converted to null, True to true, False to false.
+func (t Trit) MarshalJSON() ([]byte, error) {
+	if t.IsUnknown() {
+		return []byte("null"), nil
+	}
+	return json.Marshal(t.IsTrue())
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+// null is converted to Unknown, true to True, false to False.
+func (t *Trit) UnmarshalJSON(data []byte) error {
+	// Перевіряємо на null
+	if string(data) == "null" {
+		*t = Unknown
+		return nil
+	}
+
+	var b bool
+	if err := json.Unmarshal(data, &b); err != nil {
+		return err
+	}
+
+	if b {
+		*t = True
+	} else {
+		*t = False
+	}
+
+	return nil
 }
