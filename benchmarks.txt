@@ -1,0 +1,57 @@
+goos: linux
+goarch: arm64
+pkg: github.com/goloop/trit
+BenchmarkBasicOperations/IsTrue-6         	1000000000	         0.3874 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBasicOperations/IsFalse-6        	1000000000	         0.3856 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBasicOperations/IsUnknown-6      	1000000000	         0.3926 ns/op	       0 B/op	       0 allocs/op
+BenchmarkBasicOperations/Not-6            	1000000000	         0.4373 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/True/True-6  	234911097	         5.150 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/True/True-6   	507487512	         2.346 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/True/True-6  	256011415	         4.640 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/True/False-6 	517155758	         2.314 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/True/False-6  	516872677	         2.359 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/True/False-6 	280535136	         4.262 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/True/Unknown-6         	258602820	         4.629 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/True/Unknown-6          	516034815	         2.313 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/True/Unknown-6         	440733981	         2.703 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/False/True-6           	621918684	         1.939 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/False/True-6            	442660225	         2.740 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/False/True-6           	280399836	         4.288 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/False/False-6          	620087143	         1.935 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/False/False-6           	308936335	         3.900 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/False/False-6          	388179104	         3.132 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/False/Unknown-6        	620732149	         1.950 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/False/Unknown-6         	278881376	         4.308 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/False/Unknown-6        	513034950	         2.343 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/Unknown/True-6         	280650795	         4.289 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/Unknown/True-6          	383859872	         3.120 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/Unknown/True-6         	509072382	         2.337 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/Unknown/False-6        	509856184	         2.339 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/Unknown/False-6         	279811515	         4.288 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/Unknown/False-6        	509464034	         2.355 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/And/Unknown/Unknown-6      	275796327	         4.267 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Or/Unknown/Unknown-6       	256793510	         4.652 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLogicOperations/Xor/Unknown/Unknown-6      	514765712	         2.329 ns/op	       0 B/op	       0 allocs/op
+BenchmarkParallelOperations/All/size=100-6          	 1292320	       917.3 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Any/size=100-6          	 1270347	       892.1 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Known/size=100-6        	 1310016	       928.1 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/All/size=1000-6         	 1253952	       944.0 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Any/size=1000-6         	 1258168	       883.4 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Known/size=1000-6       	 1312274	       927.6 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/All/size=10000-6        	 1274380	       904.0 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Any/size=10000-6        	 1212654	      1013 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Known/size=10000-6      	 1225298	       911.5 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/All/size=100000-6       	 1000000	      1012 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Any/size=100000-6       	 1000000	      1044 ns/op	     448 B/op	       9 allocs/op
+BenchmarkParallelOperations/Known/size=100000-6     	 1297084	       886.2 ns/op	     448 B/op	       9 allocs/op
+BenchmarkConversions/FromBool/true-6                	566544928	         2.236 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConversions/FromInt/positive-6             	238871332	         5.028 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConversions/FromFloat64/negative-6         	281565132	         4.306 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConversions/ToString-6                     	1000000000	         0.3881 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExtendedOperations/Nand-6                  	308205770	         3.860 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExtendedOperations/Nor-6                   	257230102	         4.729 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExtendedOperations/Nxor-6                  	181579539	         6.767 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExtendedOperations/Imp-6                   	216840918	         5.597 ns/op	       0 B/op	       0 allocs/op
+BenchmarkExtendedOperations/Eq-6                    	278241660	         4.299 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/goloop/trit	80.146s
