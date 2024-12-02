@@ -3,7 +3,7 @@
 
 # trit
 
-It's useful package for working with trinary logic in Go!
+Package for working with three-valued (trinary) logic in Go.
 
 Package defines the data type and basic operations of a ternary logic system, often referred to as trinary or ternary logic. It supports three states, namely False, Unknown, and True, with False represented by  negative number (-1), Unknown represented by zero (0), and True represented by positive number (1).
 
@@ -13,15 +13,21 @@ There are also some useful methods provided for checking the state of a Trit val
 
 Overall, this package can be beneficial in scenarios where a "maybe" or "unknown" state is needed, such as in database systems and logic circuits, and in the construction of trinary computers and balanced ternary systems.
 
-## Quick start
-
-Install package:
-
-```shell
-$ go get github.com/goloop/trit
+## Installation
+```bash
+go get github.com/goloop/trit
 ```
 
-Some examples of using the package:
+## Features
+- Three-valued logic operations (True, False, Unknown)
+- Safe bool conversions with Unknown state handling
+- JSON marshaling (Unknown → null)
+- Thread-safe parallel operations for slices
+- Zero allocations for basic operations
+- Extensive test coverage
+- Comprehensive truth tables documentation
+
+## Quick Start
 
 ```go
 package main
@@ -358,3 +364,11 @@ func main() {
 ```
 
 This is a very simple and demonstrative example of using three-valued logic in everyday life.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
