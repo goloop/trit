@@ -244,6 +244,12 @@ func TestAggregatesMixedTypes(t *testing.T) {
 	if Consensus(1.0, -1.0) != Unknown {
 		t.Errorf("Consensus of mixed signs must be Unknown")
 	}
+	if Majority(1.0, 1.0, -1.0) != True {
+		t.Errorf("Majority over floats (2/3 positive) must be True")
+	}
+	if Majority(false, false, true) != False {
+		t.Errorf("Majority over bools (2/3 false) must be False")
+	}
 }
 
 // TestConsensus covers agreement, disagreement and the Unknown-poison rule.

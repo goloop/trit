@@ -37,6 +37,8 @@ minimum Go version is 1.24.
 - `ParseTrit` and `encoding.TextMarshaler`/`TextUnmarshaler` support.
 - `database/sql` integration via `driver.Valuer` and `sql.Scanner`, mapping
   `Unknown` to SQL `NULL`.
+- Iterator forms of the short-circuiting aggregates: `AllSeq`, `AnySeq`,
+  `NoneSeq`, `KnownSeq` over `iter.Seq`, for lazy or infinite sequences.
 - `Compare` for the natural ordering `False < Unknown < True`.
 - `ErrInvalidTrit` sentinel error for parsing/scanning failures.
 - Runnable examples, exhaustive property tests, and fuzz targets.

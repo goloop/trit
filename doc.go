@@ -17,7 +17,8 @@
 //   - Fundamental unary operations (NOT, MA, LA, IA)
 //   - Binary logic operations (AND, OR, XOR, etc.)
 //   - Extended operations (IMP, EQ, MIN, MAX)
-//   - Slice aggregates (All, Any, None, Known, Consensus, Majority)
+//   - Slice aggregates (All, Any, None, Known, Consensus, Majority) with
+//     iterator forms (AllSeq, AnySeq, NoneSeq, KnownSeq) over iter.Seq
 //   - Serialization: JSON, text, and database/sql (Unknown maps to NULL)
 //   - Full set of comparison and testing methods
 //

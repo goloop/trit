@@ -24,7 +24,7 @@ go get github.com/goloop/trit/v2
 - Safe bool conversions with Unknown state handling
 - Serialization: JSON (Unknown → null), text, and `database/sql` (Unknown → NULL)
 - `ParseTrit` and `Compare` (ordering False < Unknown < True)
-- Slice aggregates: All, Any, None, Known, Consensus, Majority
+- Slice aggregates: All, Any, None, Known, Consensus, Majority (plus iterator forms over `iter.Seq`)
 - Zero allocations for basic operations
 - Extensive test coverage with property and fuzz tests
 - Comprehensive truth tables documentation

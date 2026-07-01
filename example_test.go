@@ -3,9 +3,17 @@ package trit_test
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/goloop/trit/v2"
 )
+
+func ExampleAllSeq() {
+	values := []trit.Trit{trit.True, trit.True, trit.False, trit.True}
+	// AllSeq stops at the first non-True value without draining the rest.
+	fmt.Println(trit.AllSeq(slices.Values(values)))
+	// Output: False
+}
 
 func ExampleTrit_And() {
 	a := trit.True

@@ -1,6 +1,7 @@
 package trit
 
 import (
+	"iter"
 	"math/rand/v2"
 )
 
@@ -505,4 +506,65 @@ func Majority[T Logicable](trits ...T) Trit {
 	}
 
 	return Unknown
+}
+
+// AllSeq is the iterator form of All. It returns True if every value produced
+// by seq is True, and False as soon as a False or Unknown value appears. It
+// stops pulling from seq at the first decisive value, so it can short-circuit
+// over lazy or infinite sequences. An empty sequence yields True (vacuous
+// truth), matching All.
+//
+// Example usage:
+//
+//	t := trit.AllSeq(slices.Values([]trit.Trit{trit.True, trit.True}))
+//	fmt.Println(t.String()) // Output: True
+func AllSeq[T Logicable](seq iter.Seq[T]) Trit {
+	for v := range seq {
+		trit := logicToTrit(v)
+		if trit.IsFalse() || trit.IsUnknown() {
+			return False
+		}
+	}
+
+	return True
+}
+
+// AnySeq is the iterator form of Any. It returns True as soon as any value
+// produced by seq is True, and False otherwise. It stops pulling from seq at
+// the first True. An empty sequence yields False, matching Any.
+func AnySeq[T Logicable](seq iter.Seq[T]) Trit {
+	for v := range seq {
+		if logicToTrit(v).IsTrue() {
+			return True
+		}
+	}
+
+	return False
+}
+
+// NoneSeq is the iterator form of None. It returns True if none of the values
+// produced by seq are True, and False as soon as a True appears. An empty
+// sequence yields True, matching None.
+func NoneSeq[T Logicable](seq iter.Seq[T]) Trit {
+	for v := range seq {
+		if logicToTrit(v).IsTrue() {
+			return False
+		}
+	}
+
+	return True
+}
+
+// KnownSeq is the iterator form of Known. It returns True if every value
+// produced by seq is definite (True or False), and False as soon as an Unknown
+// appears. It stops pulling from seq at the first Unknown. An empty sequence
+// yields True (nothing is unknown), matching Known.
+func KnownSeq[T Logicable](seq iter.Seq[T]) Trit {
+	for v := range seq {
+		if logicToTrit(v).IsUnknown() {
+			return False
+		}
+	}
+
+	return True
 }
