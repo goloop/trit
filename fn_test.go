@@ -1,1197 +1,372 @@
 package trit
 
 import (
-	"reflect"
+	"math"
 	"testing"
 )
 
-// TestParalellTasks tests the ParallelTasks function.
-func TestParallelTasks(t *testing.T) {
-	tests := []struct {
-		name   string
-		inputs []int
-		want   int
-	}{
-		{
-			name:   "No input values",
-			inputs: []int{},
-			want:   parallelTasks, // should return current value of pt
-		},
-		{
-			name:   "Input values sum to less than 0",
-			inputs: []int{-10, -5},
-			want:   1, // should be set to 1
-		},
-		{
-			name:   "Input values sum to 0",
-			inputs: []int{-5, 5},
-			want:   1, // should be set to 1
-		},
-		{
-			name:   "Input values sum to more than maxParallelTasks",
-			inputs: []int{10, maxParallelTasks + 1},
-			want:   maxParallelTasks, // should be set to maxParallelTasks
-		},
-		{
-			name:   "Input values sum to valid value",
-			inputs: []int{3, 4},
-			want:   7, // should be set to the sum of the inputs
-		},
+// TestLogicToTritAllTypes drives the reflection-free converter through every
+// concrete type in the Logicable set, including the boundary magnitudes of
+// each. The invariant: the result is always one of the three canonical states
+// and matches the sign of the input.
+func TestLogicToTritAllTypes(t *testing.T) {
+	// bool
+	if Define(true) != True || Define(false) != False {
+		t.Errorf("bool mapping broken")
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			got := ParallelTasks(test.inputs...)
-			if got != test.want {
-				t.Errorf("ParallelTasks() = %v, want %v", got, test.want)
-			}
-		})
+	// Trit passthrough (normalized).
+	if Define(Trit(7)) != True || Define(Trit(-7)) != False ||
+		Define(Trit(0)) != Unknown {
+		t.Errorf("Trit passthrough must normalize")
 	}
+
+	// Signed integers: negative/zero/positive incl. type extremes.
+	checkSigned := func(name string, neg, zero, pos Trit) {
+		if neg != False || zero != Unknown || pos != True {
+			t.Errorf("%s: neg=%s zero=%s pos=%s", name, neg, zero, pos)
+		}
+	}
+	checkSigned("int",
+		Define(math.MinInt), Define(0), Define(math.MaxInt))
+	checkSigned("int8",
+		Define(int8(math.MinInt8)), Define(int8(0)), Define(int8(math.MaxInt8)))
+	checkSigned("int16",
+		Define(int16(math.MinInt16)), Define(int16(0)), Define(int16(math.MaxInt16)))
+	checkSigned("int32",
+		Define(int32(math.MinInt32)), Define(int32(0)), Define(int32(math.MaxInt32)))
+	checkSigned("int64",
+		Define(int64(math.MinInt64)), Define(int64(0)), Define(int64(math.MaxInt64)))
+
+	// Unsigned integers: only zero -> Unknown, anything else -> True.
+	checkUnsigned := func(name string, zero, pos Trit) {
+		if zero != Unknown || pos != True {
+			t.Errorf("%s: zero=%s pos=%s", name, zero, pos)
+		}
+	}
+	checkUnsigned("uint", Define(uint(0)), Define(uint(math.MaxUint)))
+	checkUnsigned("uint8", Define(uint8(0)), Define(uint8(math.MaxUint8)))
+	checkUnsigned("uint16", Define(uint16(0)), Define(uint16(math.MaxUint16)))
+	checkUnsigned("uint32", Define(uint32(0)), Define(uint32(math.MaxUint32)))
+	checkUnsigned("uint64", Define(uint64(0)), Define(uint64(math.MaxUint64)))
+
+	// Floats.
+	checkSigned("float32",
+		Define(float32(-1)), Define(float32(0)), Define(float32(1)))
+	checkSigned("float64",
+		Define(-math.MaxFloat64), Define(0.0), Define(math.MaxFloat64))
 }
 
-// TestIsFalse tests the IsFalse function.
-func TestIsFalse(t *testing.T) {
-	tests := []struct {
-		name string
-		in   int
-		out  bool
-	}{
-		{"-1 should return true", -1, true},
-		{"1 should return false", 1, false},
-		{"0 should return false", 0, false},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsFalse(test.in)
-			if result != test.out {
-				t.Errorf("isFalse did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestIsUnknown tests the IsUnknown function.
-func TestIsUnknown(t *testing.T) {
-	tests := []struct {
-		name string
-		in   int
-		out  bool
-	}{
-		{"-1 should return false", -1, false},
-		{"1 should return false", 1, false},
-		{"0 should return true", 0, true},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsUnknown(test.in)
-			if result != test.out {
-				t.Errorf("IsUnknown did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestIsTrue tests the IsTrue function.
-func TestIsTrue(t *testing.T) {
-	tests := []struct {
-		name string
-		in   int
-		out  bool
-	}{
-		{"-1 should return false", -1, false},
-		{"1 should return true", 1, true},
-		{"0 should return false", 0, false},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsTrue(test.in)
-			if result != test.out {
-				t.Errorf("isTrue did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestSet tests the Set function.
-func TestSet(t *testing.T) {
-	tests := []struct {
-		name string
-		in   int
-		out  Trit
-	}{
-		{"-1 should return False", -1, False},
-		{"1 should return True", 1, True},
-		{"0 should return Unknown", 0, Unknown},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var trit Trit
-			result := Set(&trit, test.in)
-			if result != test.out {
-				t.Errorf("Set did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestDefine tests the Define function.
-func TestDefine(t *testing.T) {
-	tests := []struct {
-		name string
-		in   float64
-		out  Trit
-	}{
-		{"-0.1 should return False", -0.1, False},
-		{"7.7 should return True", 7.7, True},
-		{"0.0 should return Unknown", 0.0, Unknown},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Define(test.in)
-			if result != test.out {
-				t.Errorf("Define did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestConvert tests the Convert function.
+// TestConvert checks the batch converter preserves order and normalizes.
 func TestConvert(t *testing.T) {
-	tests := []struct {
-		name string
-		in   []int
-		out  []Trit
-	}{
-		{"-0.1 should return False", []int{-1, 1}, []Trit{False, True}},
-		{"7.7 should return True", []int{0, 1}, []Trit{Unknown, True}},
+	got := Convert(1, 0, -1, 5, -9)
+	want := []Trit{True, Unknown, False, True, False}
+	if len(got) != len(want) {
+		t.Fatalf("Convert length = %d, want %d", len(got), len(want))
 	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Convert(test.in...)
-			// DeepEqual is used to compare slices.
-			if !reflect.DeepEqual(result, test.out) {
-				t.Errorf("Convert did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestAll tests the All function.
-func TestAll(t *testing.T) {
-	ParallelTasks(2)
-	minLoadPerGoroutine = 20
-	tests := []struct {
-		name string
-		in   []Trit
-		out  Trit
-	}{
-		{"[1, 1, 1] should return True", []Trit{True, True, True}, True},
-		{"[1, 0, 1] should return False", []Trit{True, False, True}, False},
-		{"[0, 0, 0] should return False", []Trit{False, False, False}, False},
-		{"[0, 0, 1] should return False", []Trit{False, False, True}, False},
-		{"[0, 1, 0] should return False", []Trit{False, True, False}, False},
-		{"[0, 1, 1] should return False", []Trit{False, True, True}, False},
-		{"[1, 0, 0] should return False", []Trit{True, False, False}, False},
-		{"[1, 1, 0] should return False", []Trit{True, True, False}, False},
-		{
-			name: "Just empty list",
-			in:   []Trit{},
-			out:  False,
-		},
-		{
-			name: "A very large list for testing goroutines",
-			in: []Trit{
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, Unknown, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-			},
-			out: False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := All(test.in...)
-			if result != test.out {
-				t.Errorf("All did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestAny tests the Any function.
-func TestAny(t *testing.T) {
-	ParallelTasks(2)
-	minLoadPerGoroutine = 20
-	tests := []struct {
-		name string
-		in   []Trit
-		out  Trit
-	}{
-		{"[1, 1, 1] should return True", []Trit{True, True, True}, True},
-		{"[1, 0, 1] should return True", []Trit{True, False, True}, True},
-		{"[0, 0, 0] should return False", []Trit{False, False, False}, False},
-		{"[0, 0, 1] should return True", []Trit{False, False, True}, True},
-		{"[0, 1, 0] should return True", []Trit{False, True, False}, True},
-		{"[0, 1, 1] should return True", []Trit{False, True, True}, True},
-		{"[1, 0, 0] should return True", []Trit{True, False, False}, True},
-		{"[1, 1, 0] should return True", []Trit{True, True, False}, True},
-		{
-			name: "Just empty list",
-			in:   []Trit{},
-			out:  False,
-		},
-		{
-			name: "A very large list for testing goroutines",
-			in: []Trit{
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, True, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-				False, False, False, False, False, False, False, False, False,
-			},
-			out: True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Any(test.in...)
-			if result != test.out {
-				t.Errorf("Any did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestNone tests the None function.
-func TestNone(t *testing.T) {
-	tests := []struct {
-		name string
-		in   []Trit
-		out  Trit
-	}{
-		{"[1, 1, 1] should return False", []Trit{True, True, True}, False},
-		{"[1, 0, 1] should return False", []Trit{True, False, True}, False},
-		{"[0, 0, 0] should return True", []Trit{False, False, False}, True},
-		{"[0, 0, 1] should return False", []Trit{False, False, True}, False},
-		{"[0, 1, 0] should return False", []Trit{False, True, False}, False},
-		{"[0, 1, 1] should return False", []Trit{False, True, True}, False},
-		{"[1, 0, 0] should return False", []Trit{True, False, False}, False},
-		{"[1, 1, 0] should return False", []Trit{True, True, False}, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := None(test.in...)
-			if result != test.out {
-				t.Errorf("None did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestLogicToTrit tests the logicToTrit function.
-func TestLogicToTrit(t *testing.T) {
-	// Numbers.
-	testsInt := []struct {
-		name string
-		in   int
-		out  Trit
-	}{
-		{"1 should return True", 1, True},
-		{"-1 should return False", -1, False},
-		{"0 should return Unknown", 0, Unknown},
-		{"-77 should return False", -77, False},
-		{"1000000 should return True", 1000000, True},
-	}
-
-	for _, test := range testsInt {
-		t.Run(test.name, func(t *testing.T) {
-			result := logicToTrit(test.in)
-			if result != test.out {
-				t.Errorf("logicToTrit did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-
-	testsUint := []struct {
-		name string
-		in   uint
-		out  Trit
-	}{
-		{"1 should return True", 1, True},
-		{"0 should return Unknown", 0, Unknown},
-		{"1000000 should return True", 1000000, True},
-	}
-
-	for _, test := range testsUint {
-		t.Run(test.name, func(t *testing.T) {
-			result := logicToTrit(test.in)
-			if result != test.out {
-				t.Errorf("logicToTrit did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-
-	testsFloat := []struct {
-		name string
-		in   float64
-		out  Trit
-	}{
-		{"0.3 should return True", 0.3, True},
-		{"-0.3 should return False", -0.3, False},
-		{"0.0 should return Unknown", 0.0, Unknown},
-		{"-77.5 should return False", -77.5, False},
-		{"1000000.5 should return True", 1000000.5, True},
-	}
-
-	for _, test := range testsFloat {
-		t.Run(test.name, func(t *testing.T) {
-			result := logicToTrit(test.in)
-			if result != test.out {
-				t.Errorf("logicToTrit did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-
-	// Bool.
-	testsBool := []struct {
-		name string
-		in   bool
-		out  Trit
-	}{
-		{"trut should return True", true, True},
-		{"false should return False", false, False},
-	}
-
-	for _, test := range testsBool {
-		t.Run(test.name, func(t *testing.T) {
-			result := logicToTrit(test.in)
-			if result != test.out {
-				t.Errorf("logicToTrit did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-
-	// Trit.
-	testsTrit := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"True should return True", True, True},
-		{"False should return False", False, False},
-		{"Unknown should return False", Unknown, Unknown},
-	}
-
-	for _, test := range testsTrit {
-		t.Run(test.name, func(t *testing.T) {
-			result := logicToTrit(test.in)
-			if result != test.out {
-				t.Errorf("logicToTrit did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestDefault tests the Default method.
-func TestDefault(t *testing.T) {
-	t.Run("Default with bool value", func(t *testing.T) {
-		t1 := Unknown
-		Default(&t1, true)
-		if t1 != True {
-			t.Errorf("Default did not update Unknown to True")
-		}
-
-		t2 := Unknown
-		Default(&t2, false)
-		if t2 != False {
-			t.Errorf("Default did not update Unknown to False")
-		}
-	})
-
-	t.Run("Default with numeric value", func(t *testing.T) {
-		t1 := Unknown
-		Default(&t1, int32(1)) // for example int32
-		if t1 != True {
-			t.Errorf("Default did not update Unknown to True")
-		}
-
-		t2 := Unknown
-		Default(&t2, int64(-1)) // for example int64
-		if t2 != False {
-			t.Errorf("Default did not update Unknown to False")
-		}
-	})
-
-	t.Run("Default with Trit value", func(t *testing.T) {
-		t1 := Unknown
-		Default(&t1, True)
-		if t1 != True {
-			t.Errorf("Default did not update Unknown to True")
-		}
-
-		t2 := Unknown
-		Default(&t2, False)
-		if t2 != False {
-			t.Errorf("Default did not update Unknown to False")
-		}
-	})
-
-	t.Run("Should not update non-Unknown Trit", func(t *testing.T) {
-		t1 := True
-		Default(&t1, false)
-		if t1 != True {
-			t.Errorf("Default updated non-Unknown Trit")
-		}
-	})
-}
-
-// TestNot tests the Not function.
-func TestNot(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Not should return True for False", False, True},
-		{"Not should return Unknown for Unknown", Unknown, Unknown},
-		{"Not should return False for True", True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Not(test.in)
-			if result != test.out {
-				t.Errorf("Not did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestMa tests the Ma function.
-func TestMa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Ma should return False for False", False, False},
-		{"Ma should return True for Unknown", Unknown, True},
-		{"Ma should return True for True", True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Ma(test.in)
-			if result != test.out {
-				t.Errorf("Ma did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestLa tests the La function.
-func TestLa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"La should return False for False", False, False},
-		{"La should return False for Unknown", Unknown, False},
-		{"La should return True for True", True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := La(test.in)
-			if result != test.out {
-				t.Errorf("La did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestIa tests the Ia function.
-func TestIa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Ia should return False for False", False, False},
-		{"Ia should return True for Unknown", Unknown, True},
-		{"Ia should return False for True", True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Ia(test.in)
-			if result != test.out {
-				t.Errorf("Ia did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestAnd tests the And function.
-func TestAnd(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be False for (False, False)", False, False, False},
-		{"Should be False for (False, Unknown)", False, Unknown, False},
-		{"Should be False for (False, True)", False, True, False},
-		{"Should be False for (Unknown, False)", Unknown, False, False},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
-		{"Should be False for (True, False)", True, False, False},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := And(test.a, test.b)
-			if result != test.out {
-				t.Errorf("And did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestOr tests the Or function.
-func TestOr(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be False for (False, False)", False, False, False},
-		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
-		{"Should be True for (False, True)", False, True, True},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be True for (Unknown, True)", Unknown, True, True},
-		{"Should be True for (True, False)", True, False, True},
-		{"Should be True for (True, Unknown)", True, Unknown, True},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Or(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Or did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestXor tests the Xor function.
-func TestXor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be False for (False, False)", False, False, False},
-		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
-		{"Should be True for (False, True)", False, True, True},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
-		{"Should be True for (True, False)", True, False, True},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be False for (True, True)", True, True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Xor(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Xor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestNand tests the Nand function.
-func TestNand(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be True for (False, False)", False, False, True},
-		{"Should be True for (False, Unknown)", False, Unknown, True},
-		{"Should be True for (False, True)", False, True, True},
-		{"Should be True for (Unknown, False)", Unknown, False, True},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
-		{"Should be True for (True, False)", True, False, True},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be False for (True, True)", True, True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Nand(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Nand did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestNor tests the Nor function.
-func TestNor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be True for (False, False)", False, False, True},
-		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
-		{"Should be False for (False, True)", False, True, False},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be False for (Unknown, True)", Unknown, True, False},
-		{"Should be False for (True, False)", True, False, False},
-		{"Should be False for (True, Unknown)", True, Unknown, False},
-		{"Should be False for (True, True)", True, True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Nor(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Nor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestNxor tests the Nxor function.
-func TestNxor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be True for (False, False)", False, False, True},
-		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
-		{"Should be False for (False, True)", False, True, False},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
-		{"Should be False for (True, False)", True, False, False},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Nxor(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Nxor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMin tests the Min function.
-func TestMin(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be False for (False, False)", False, False, False},
-		{"Should be False for (False, Unknown)", False, Unknown, False},
-		{"Should be False for (False, True)", False, True, False},
-		{"Should be False for (Unknown, False)", Unknown, False, False},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be Unknown for (Unknown, True)", Unknown, True, Unknown},
-		{"Should be False for (True, False)", True, False, False},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Min(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Min did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMax tests the Max function.
-func TestMax(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be False for (False, False)", False, False, False},
-		{"Should be Unknown for (False, Unknown)", False, Unknown, Unknown},
-		{"Should be True for (False, True)", False, True, True},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{
-			"Should be Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{"Should be True for (Unknown, True)", Unknown, True, True},
-		{"Should be True for (True, False)", True, False, True},
-		{"Should be True for (True, Unknown)", True, Unknown, True},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Max(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Max did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestImp tests the Imp function.
-func TestImp(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Should be True for (False, False)", False, False, True},
-		{"Should be True for (False, Unknown)", False, Unknown, True},
-		{"Should be True for (False, True)", False, True, True},
-		{"Should be Unknown for (Unknown, False)", Unknown, False, Unknown},
-		{"Should be True for (Unknown, Unknown)", Unknown, Unknown, True},
-		{"Should be True for (Unknown, True)", Unknown, True, True},
-		{"Should be False for (True, False)", True, False, False},
-		{"Should be Unknown for (True, Unknown)", True, Unknown, Unknown},
-		{"Should be True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Imp(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Imp did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestNimp tests the Nimp function.
-func TestNimp(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Nimp should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Nimp should return False for (False, Unknown)",
-			False, Unknown, False,
-		},
-		{
-			"Nimp should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Nimp should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Nimp should return False for (Unknown, Unknown)",
-			Unknown, Unknown, False,
-		},
-		{
-			"Nimp should return False for (Unknown, True)",
-			Unknown, True, False,
-		},
-		{
-			"Nimp should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Nimp should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Nimp should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Nimp(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Nimp did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestEq tests the Eq function.
-func TestEq(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Eq should return True for (False, False)", False, False, True},
-		{
-			"Eq should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{"Eq should return False for (False, True)", False, True, False},
-		{
-			"Eq should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Eq should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Eq should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{"Eq should return False for (True, False)", True, False, False},
-		{
-			"Eq should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{"Eq should return True for (True, True)", True, True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Eq(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Eq did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestNeq tests the Neq function.
-func TestNeq(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{"Neq should return False for (False, False)", False, False, False},
-		{
-			"Neq should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{"Neq should return True for (False, True)", False, True, True},
-		{
-			"Neq should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Neq should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Neq should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{"Neq should return True for (True, False)", True, False, True},
-		{
-			"Neq should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{"Neq should return False for (True, True)", True, True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Neq(test.a, test.b)
-			if result != test.out {
-				t.Errorf("Neq did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestKnown tests the Known function.
-func TestKnown(t *testing.T) {
-	ParallelTasks(2)
-	minLoadPerGoroutine = 20
-	tests := []struct {
-		name string
-		in   []Trit
-		out  Trit
-	}{
-		{
-			name: "Known should return True for (True, True, True)",
-			in:   []Trit{True, True, True},
-			out:  True,
-		},
-		{
-			name: "Known should return True for (True, True, False)",
-			in:   []Trit{True, True, False},
-			out:  True,
-		},
-		{
-			name: "Known should return True for (False, False, False)",
-			in:   []Trit{False, False, False},
-			out:  True,
-		},
-		{
-			name: "Known should return False for (False, Unknown, True)",
-			in:   []Trit{False, Unknown, True},
-			out:  False,
-		},
-		{
-			name: "Known should return False for (Unknown, Unknown)",
-			in:   []Trit{Unknown, Unknown},
-			out:  False,
-		},
-		{
-			name: "Just empty list",
-			in:   []Trit{},
-			out:  False,
-		},
-		{
-			name: "A very large list for testing goroutines",
-			in: []Trit{
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, False, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, False, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, Unknown, True, True, True, True, True, True,
-				True, True, True, True, True, True, True, True, True, True,
-				True, True, True, True, True, True, False, False, False,
-			},
-			out: False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Known(test.in...)
-			if result != test.out {
-				t.Errorf("Known did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestIsConfidence tests the IsConfidence function.
-func TestIsConfidence(t *testing.T) {
-	tests := []struct {
-		name string
-		in   []Trit
-		out  bool
-	}{
-		{
-			name: "IsConfidence should return true for (True, True, True)",
-			in:   []Trit{True, True, True},
-			out:  true,
-		},
-		{
-			name: "IsConfidence should return true for (True, True, False)",
-			in:   []Trit{True, True, False},
-			out:  true,
-		},
-		{
-			name: "IsConfidence should return true for (False, False, False)",
-			in:   []Trit{False, False, False},
-			out:  true,
-		},
-		{
-			name: "IsConfidence should return false (False, Unknown, True)",
-			in:   []Trit{False, Unknown, True},
-			out:  false,
-		},
-		{
-			name: "IsConfidence should return false for (Unknown, Unknown)",
-			in:   []Trit{Unknown, Unknown},
-			out:  false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsConfidence(test.in...)
-			if result != test.out {
-				t.Errorf("IsConfidence did not return %v for %v",
-					test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestRandom tests the Random function.
-func TestRandom(t *testing.T) {
-	// No arguments.
-	result := Random()
-	if !(result == False || result == True || result == Unknown) {
-		t.Errorf("Something went wrong with Random()")
-	}
-
-	// Unknow - 0%
-	for i := 0; i < 10; i++ {
-		result = Random(0)
-		if result == Unknown {
-			t.Errorf("Expected a random value as True or False, got %v",
-				result)
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("Convert[%d] = %s, want %s", i, got[i], want[i])
 		}
 	}
 
-	// Two arguments.
-	for i := 0; i < 10; i++ {
-		result = Random(90, 5, 5)
-		if result != Unknown {
-			t.Errorf("Expected a random value as Unknown, got %v", result)
-		}
-	}
-
-	result = Random(90, 60, 90)
-	if result != Unknown {
-		t.Errorf("Expected a random value as Unknown, got %v", result)
+	if len(Convert[int]()) != 0 {
+		t.Errorf("Convert() on empty must return empty slice")
 	}
 }
 
-// TestConsensus tests Consensus function.
+// TestFreeFunctionPredicates ties the generic predicate/setter free functions
+// to their expected results across a couple of Logicable types.
+func TestFreeFunctionPredicates(t *testing.T) {
+	if !IsTrue(1) || !IsTrue(true) || IsTrue(0) {
+		t.Errorf("IsTrue mismatch")
+	}
+	if !IsFalse(-1) || IsFalse(0) || IsFalse(true) {
+		t.Errorf("IsFalse mismatch")
+	}
+	if !IsUnknown(0) || IsUnknown(1) {
+		t.Errorf("IsUnknown mismatch")
+	}
+
+	var v Trit
+	if Set(&v, -3.5); v != False {
+		t.Errorf("Set(-3.5) = %s", v)
+	}
+
+	u := Unknown
+	if Default(&u, uint(4)); u != True {
+		t.Errorf("Default with uint(4) = %s", u)
+	}
+	d := False
+	if Default(&d, true); d != False {
+		t.Errorf("Default must not override a defined value, got %s", d)
+	}
+}
+
+// TestFreeFunctionsMatchMethods asserts that every generic operation free
+// function agrees with the corresponding method for all 3x3 (or 3) inputs.
+// This guarantees the two API surfaces never drift apart.
+func TestFreeFunctionsMatchMethods(t *testing.T) {
+	unary := []struct {
+		name string
+		fn   func(Trit) Trit
+		m    func(Trit) Trit
+	}{
+		{"Not", func(x Trit) Trit { return Not(x) }, Trit.Not},
+		{"Ma", func(x Trit) Trit { return Ma(x) }, Trit.Ma},
+		{"La", func(x Trit) Trit { return La(x) }, Trit.La},
+		{"Ia", func(x Trit) Trit { return Ia(x) }, Trit.Ia},
+	}
+	for _, op := range unary {
+		for _, a := range canonical {
+			if op.fn(a) != op.m(a) {
+				t.Errorf("%s(%s): free=%s method=%s",
+					op.name, a, op.fn(a), op.m(a))
+			}
+		}
+	}
+
+	binary := []struct {
+		name string
+		fn   func(Trit, Trit) Trit
+		m    func(Trit, Trit) Trit
+	}{
+		{"And", func(a, b Trit) Trit { return And(a, b) }, Trit.And},
+		{"Or", func(a, b Trit) Trit { return Or(a, b) }, Trit.Or},
+		{"Xor", func(a, b Trit) Trit { return Xor(a, b) }, Trit.Xor},
+		{"Nand", func(a, b Trit) Trit { return Nand(a, b) }, Trit.Nand},
+		{"Nor", func(a, b Trit) Trit { return Nor(a, b) }, Trit.Nor},
+		{"Nxor", func(a, b Trit) Trit { return Nxor(a, b) }, Trit.Nxor},
+		{"Imp", func(a, b Trit) Trit { return Imp(a, b) }, Trit.Imp},
+		{"Nimp", func(a, b Trit) Trit { return Nimp(a, b) }, Trit.Nimp},
+		{"Eq", func(a, b Trit) Trit { return Eq(a, b) }, Trit.Eq},
+		{"Neq", func(a, b Trit) Trit { return Neq(a, b) }, Trit.Neq},
+		{"Min", func(a, b Trit) Trit { return Min(a, b) }, Trit.Min},
+		{"Max", func(a, b Trit) Trit { return Max(a, b) }, Trit.Max},
+	}
+	for _, op := range binary {
+		for _, a := range canonical {
+			for _, b := range canonical {
+				if op.fn(a, b) != op.m(a, b) {
+					t.Errorf("%s(%s,%s): free=%s method=%s",
+						op.name, a, b, op.fn(a, b), op.m(a, b))
+				}
+			}
+		}
+	}
+}
+
+// TestMinMaxAliases documents that Min/Max are exact aliases of And/Or.
+func TestMinMaxAliases(t *testing.T) {
+	for _, a := range canonical {
+		for _, b := range canonical {
+			if a.Min(b) != a.And(b) {
+				t.Errorf("Min(%s,%s) != And", a, b)
+			}
+			if a.Max(b) != a.Or(b) {
+				t.Errorf("Max(%s,%s) != Or", a, b)
+			}
+		}
+	}
+}
+
+// TestAggregatesBasic covers the "happy path" of the slice aggregates.
+func TestAggregatesBasic(t *testing.T) {
+	if All(True, True, True) != True {
+		t.Errorf("All(T,T,T) != True")
+	}
+	if All(True, Unknown, True) != False {
+		t.Errorf("All with Unknown must be False")
+	}
+	if All(True, False) != False {
+		t.Errorf("All with False must be False")
+	}
+
+	if Any(False, False, True) != True {
+		t.Errorf("Any with a True must be True")
+	}
+	if Any(False, Unknown, False) != False {
+		t.Errorf("Any without True must be False")
+	}
+
+	if None(False, False) != True {
+		t.Errorf("None without True must be True")
+	}
+	if None(False, True) != False {
+		t.Errorf("None with True must be False")
+	}
+
+	if Known(True, False, True) != True {
+		t.Errorf("Known of definite values must be True")
+	}
+	if Known(True, Unknown) != False {
+		t.Errorf("Known with Unknown must be False")
+	}
+}
+
+// TestAggregatesEmpty pins the agreed formal-logic empty-input convention. This
+// is the invariant that the audit flagged as inconsistent; keep it explicit.
+func TestAggregatesEmpty(t *testing.T) {
+	cases := []struct {
+		name string
+		got  Trit
+		want Trit
+	}{
+		{"All", All[Trit](), True},     // vacuous truth of forall
+		{"Any", Any[Trit](), False},    // nothing can be true
+		{"None", None[Trit](), True},   // nothing is true
+		{"Known", Known[Trit](), True}, // nothing is unknown
+		{"Consensus", Consensus[Trit](), Unknown},
+		{"Majority", Majority[Trit](), Unknown},
+	}
+	for _, c := range cases {
+		if c.got != c.want {
+			t.Errorf("%s() on empty = %s, want %s", c.name, c.got, c.want)
+		}
+	}
+}
+
+// TestAggregatesMixedTypes makes sure the aggregates work over the generic
+// Logicable set, not just Trit.
+func TestAggregatesMixedTypes(t *testing.T) {
+	if All(1, 2, 3) != True {
+		t.Errorf("All over positive ints must be True")
+	}
+	if Any(0, 0, 5) != True {
+		t.Errorf("Any over ints with a positive must be True")
+	}
+	if Known(1, -1, 0) != False {
+		t.Errorf("Known with a zero (Unknown) must be False")
+	}
+	if Consensus(true, true, true) != True {
+		t.Errorf("Consensus of all-true bools must be True")
+	}
+	if Consensus(1.0, -1.0) != Unknown {
+		t.Errorf("Consensus of mixed signs must be Unknown")
+	}
+}
+
+// TestConsensus covers agreement, disagreement and the Unknown-poison rule.
 func TestConsensus(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    []Trit
-		expected Trit
-	}{
-		{"All True", []Trit{True, True, True}, True},
-		{"All False", []Trit{False, False, False}, False},
-		{"Mixed", []Trit{True, False, True}, Unknown},
-		{"With Unknown", []Trit{True, True, Unknown}, Unknown},
+	if Consensus(True, True, True) != True {
+		t.Errorf("all True -> True")
 	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if result := Consensus(tc.input...); result != tc.expected {
-				t.Fatalf("Expected %v, but got %v", tc.expected, result)
-			}
-		})
+	if Consensus(False, False) != False {
+		t.Errorf("all False -> False")
+	}
+	if Consensus(True, False) != Unknown {
+		t.Errorf("mixed -> Unknown")
+	}
+	// A single Unknown poisons the result even if the rest agree.
+	if Consensus(True, True, Unknown) != Unknown {
+		t.Errorf("any Unknown -> Unknown")
 	}
 }
 
-// TestMajority tests Majority function.
+// TestMajority checks the strict-majority rule and its ties.
 func TestMajority(t *testing.T) {
-	testCases := []struct {
-		name     string
-		input    []Trit
-		expected Trit
-	}{
-		{"Majority True", []Trit{True, True, False}, True},
-		{"Majority False", []Trit{False, False, True}, False},
-		{"No Majority", []Trit{True, False, Unknown}, Unknown},
+	if Majority(True, True, False) != True {
+		t.Errorf("2/3 True -> True")
+	}
+	if Majority(False, False, True) != False {
+		t.Errorf("2/3 False -> False")
+	}
+	// Exact tie is not a strict majority.
+	if Majority(True, False) != Unknown {
+		t.Errorf("tie -> Unknown")
+	}
+	// Unknown votes dilute the majority.
+	if Majority(True, Unknown, Unknown) != Unknown {
+		t.Errorf("1/3 True -> Unknown")
+	}
+	if Majority(True, True, False, Unknown) != Unknown {
+		t.Errorf("2/4 True is not a strict majority (>2 needed) -> Unknown")
+	}
+}
+
+// TestRandomReachability is the semantic test the audit called for: over many
+// draws every reachable state must actually occur, and the empirical
+// distribution must match the requested probability within tolerance. The old
+// implementation silently never produced True.
+func TestRandomReachability(t *testing.T) {
+	const n = 200000
+
+	count := func(up ...uint8) map[Trit]int {
+		m := map[Trit]int{}
+		for i := 0; i < n; i++ {
+			m[Random(up...)]++
+		}
+		return m
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if result := Majority(tc.input...); result != tc.expected {
-				t.Fatalf("Expected %v, but got %v", tc.expected, result)
-			}
-		})
+	// approxEq checks that got/n is within tol of want (a fraction).
+	approxEq := func(got int, want, tol float64) bool {
+		f := float64(got) / float64(n)
+		return math.Abs(f-want) <= tol
+	}
+
+	t.Run("default p=33", func(t *testing.T) {
+		m := count()
+		if m[True] == 0 {
+			t.Fatalf("True is unreachable by default: %v", m)
+		}
+		if m[False] == 0 || m[Unknown] == 0 {
+			t.Fatalf("some state unreachable: %v", m)
+		}
+		// ~33% Unknown, remaining split evenly (~33.5% each).
+		if !approxEq(m[Unknown], 0.33, 0.03) {
+			t.Errorf("Unknown share off: %v", m)
+		}
+		// True and False must be roughly symmetric.
+		if !approxEq(m[True], 0.335, 0.03) || !approxEq(m[False], 0.335, 0.03) {
+			t.Errorf("True/False not symmetric: %v", m)
+		}
+	})
+
+	t.Run("p=50 stays symmetric", func(t *testing.T) {
+		m := count(50)
+		if m[True] == 0 || m[False] == 0 {
+			t.Fatalf("True/False unreachable at p=50: %v", m)
+		}
+		if !approxEq(m[Unknown], 0.50, 0.03) {
+			t.Errorf("Unknown share off at p=50: %v", m)
+		}
+		if !approxEq(m[True], 0.25, 0.03) || !approxEq(m[False], 0.25, 0.03) {
+			t.Errorf("True/False not ~25%% each at p=50: %v", m)
+		}
+	})
+
+	t.Run("p=0 never Unknown", func(t *testing.T) {
+		m := count(0)
+		if m[Unknown] != 0 {
+			t.Errorf("p=0 produced Unknown: %v", m)
+		}
+		if m[True] == 0 || m[False] == 0 {
+			t.Errorf("p=0 must yield both True and False: %v", m)
+		}
+	})
+
+	t.Run("p=100 always Unknown", func(t *testing.T) {
+		m := count(100)
+		if m[True] != 0 || m[False] != 0 {
+			t.Errorf("p=100 must be Unknown only: %v", m)
+		}
+	})
+
+	t.Run("summed and clamped", func(t *testing.T) {
+		// 60+60 sums to 120, clamped to 100 -> always Unknown.
+		m := count(60, 60)
+		if m[True] != 0 || m[False] != 0 {
+			t.Errorf("summed probability must clamp to 100: %v", m)
+		}
+	})
+}
+
+// TestTritterInterface confirms *Trit satisfies Tritter (also asserted at
+// compile time) and that the interface methods behave.
+func TestTritterInterface(t *testing.T) {
+	var tr Tritter = new(Trit)
+	if tr.IsUnknown() != true || tr.Int() != 0 || tr.String() != "Unknown" {
+		t.Errorf("zero *Trit via Tritter misbehaves")
 	}
 }

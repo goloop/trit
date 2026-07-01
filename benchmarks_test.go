@@ -67,37 +67,33 @@ func BenchmarkLogicOperations(b *testing.B) {
 	}
 }
 
-// BenchmarkParallelOperations benchmarks operations that use goroutines
-func BenchmarkParallelOperations(b *testing.B) {
-	// Create large slices of different sizes to test parallel processing
+// BenchmarkAggregates benchmarks the slice aggregates over a range of sizes.
+// The decisive element is placed at the very end so the linear scan cannot
+// short-circuit early — this measures the true worst case.
+func BenchmarkAggregates(b *testing.B) {
 	sizes := []int{100, 1000, 10000, 100000}
 
 	for _, size := range sizes {
+		// All-True slice forces All/Known/Any to traverse everything.
 		values := make([]Trit, size)
 		for i := range values {
-			if i%3 == 0 {
-				values[i] = True
-			} else if i%3 == 1 {
-				values[i] = False
-			} else {
-				values[i] = Unknown
-			}
+			values[i] = True
 		}
 
 		b.Run("All/size="+fmt.Sprint(size), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = All(values...)
 			}
 		})
 
 		b.Run("Any/size="+fmt.Sprint(size), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = Any(values...)
 			}
 		})
 
 		b.Run("Known/size="+fmt.Sprint(size), func(b *testing.B) {
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_ = Known(values...)
 			}
 		})

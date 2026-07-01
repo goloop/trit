@@ -1,3 +1,3 @@
-module github.com/goloop/trit
+module github.com/goloop/trit/v2
 
-go 1.20
+go 1.24

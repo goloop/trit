@@ -1,1192 +1,433 @@
 package trit
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"errors"
+	"math"
 	"testing"
 )
 
-// TestMethodDefault tests the Default method.
-func TestMethodDefault(t *testing.T) {
-	t.Run("Def should update Unknown to True", func(t *testing.T) {
-		t1 := Unknown
-		result := t1.Default(True)
-		if result != True {
-			t.Errorf("Did not update Unknown to True")
-		}
-	})
+// canonical is the set of the three canonical Trit states.
+var canonical = []Trit{False, Unknown, True}
 
-	t.Run("Def should update Unknown to False", func(t *testing.T) {
-		t1 := Unknown
-		result := t1.Default(False)
-		if result != False {
-			t.Errorf("Def did not update Unknown to False")
-		}
-	})
+// TestConstants pins the numeric identity of the states. The whole package
+// leans on Unknown being the int8 zero value; if that ever changes, the
+// zero-value guarantee and the JSON/SQL NULL mapping silently break.
+func TestConstants(t *testing.T) {
+	if int8(False) != -1 || int8(Unknown) != 0 || int8(True) != 1 {
+		t.Fatalf("constant drift: F=%d U=%d T=%d",
+			int8(False), int8(Unknown), int8(True))
+	}
 
-	t.Run("Def should not update non-Unknown Trit", func(t *testing.T) {
-		t1 := True
-		result := t1.Default(False)
-		if result != True {
-			t.Errorf("Def updated non-Unknown Trit")
-		}
-	})
+	var zero Trit
+	if zero != Unknown {
+		t.Errorf("zero value must be Unknown, got %s", zero)
+	}
 }
 
-// TestTrueIfUnknown tests the TrueIfUnknown method.
-func TestTrueIfUnknown(t *testing.T) {
-	t.Run("Should set Unknown to True", func(t *testing.T) {
-		tr := Unknown
-		tr.TrueIfUnknown()
-		if tr != True {
-			t.Errorf("TrueIfUnknown did not set Unknown to True")
-		}
-	})
+// TestPredicatesTolerant checks that the predicates treat *any* negative int8
+// as False and *any* positive int8 as True, including the extreme boundaries
+// of the underlying type. This is the "tolerant" contract of the type.
+func TestPredicatesTolerant(t *testing.T) {
+	tests := []struct {
+		in                     int8
+		isFalse, isUnk, isTrue bool
+	}{
+		{-128, true, false, false}, // int8 minimum
+		{-1, true, false, false},
+		{0, false, true, false},
+		{1, false, false, true},
+		{127, false, false, true}, // int8 maximum
+	}
 
-	t.Run("Should not change True to False", func(t *testing.T) {
-		tr := True
-		tr.TrueIfUnknown()
-		if tr != True {
-			t.Errorf("TrueIfUnknown changed True to False")
+	for _, tt := range tests {
+		v := Trit(tt.in)
+		if v.IsFalse() != tt.isFalse ||
+			v.IsUnknown() != tt.isUnk ||
+			v.IsTrue() != tt.isTrue {
+			t.Errorf("Trit(%d): got F=%v U=%v T=%v",
+				tt.in, v.IsFalse(), v.IsUnknown(), v.IsTrue())
 		}
-	})
 
-	t.Run("Should not change False to True", func(t *testing.T) {
-		tr := False
-		tr.TrueIfUnknown()
-		if tr != False {
-			t.Errorf("TrueIfUnknown changed False to True")
+		// Exactly one predicate must hold at all times.
+		n := 0
+		for _, b := range []bool{v.IsFalse(), v.IsUnknown(), v.IsTrue()} {
+			if b {
+				n++
+			}
 		}
-	})
+		if n != 1 {
+			t.Errorf("Trit(%d): %d predicates true, want exactly 1", tt.in, n)
+		}
+	}
 }
 
-// TestFalseIfUnknown tests the FalseIfUnknown method.
-func TestFalseIfUnknown(t *testing.T) {
-	t.Run("Should set Unknown to False", func(t *testing.T) {
-		tr := Unknown
-		tr.FalseIfUnknown()
-		if tr != False {
-			t.Errorf("FalseIfUnknown did not set Unknown to False")
-		}
-	})
+// TestValNormInt verifies that Val/Norm/Int all collapse non-canonical values
+// to the canonical {-1,0,1} triple and stay mutually consistent.
+func TestValNormInt(t *testing.T) {
+	for raw := -128; raw <= 127; raw++ {
+		v := Trit(int8(raw))
 
-	t.Run("Should not change False to True", func(t *testing.T) {
-		tr := False
-		tr.FalseIfUnknown()
-		if tr != False {
-			t.Errorf("FalseIfUnknown changed False to True")
+		var want Trit
+		switch {
+		case raw < 0:
+			want = False
+		case raw > 0:
+			want = True
+		default:
+			want = Unknown
 		}
-	})
 
-	t.Run("Should not change True to False", func(t *testing.T) {
-		tr := True
-		tr.FalseIfUnknown()
-		if tr != True {
-			t.Errorf("FalseIfUnknown changed True to False")
+		if got := v.Val(); got != want {
+			t.Errorf("Trit(%d).Val() = %s, want %s", raw, got, want)
 		}
-	})
+
+		// Norm mutates in place and must agree with Val.
+		n := v
+		if got := n.Norm(); got != want || n != want {
+			t.Errorf("Trit(%d).Norm() = %s (self=%s), want %s",
+				raw, got, n, want)
+		}
+
+		if got := v.Int(); got != int(want) {
+			t.Errorf("Trit(%d).Int() = %d, want %d", raw, got, int(want))
+		}
+	}
 }
 
-// TestClean tests the Clean method.
-func TestClean(t *testing.T) {
-	t.Run("Clean should set Unknown to Unknown", func(t *testing.T) {
-		tr := Unknown
-		tr.Clean()
-		if tr != Unknown {
-			t.Errorf("Clean did not set Unknown to Unknown")
-		}
-	})
-
-	t.Run("Clean should not change False to Unknown", func(t *testing.T) {
-		tr := False
-		tr.Clean()
-		if tr != False {
-			t.Errorf("Clean changed False to Unknown")
-		}
-	})
-
-	t.Run("Clean should not change True to Unknown", func(t *testing.T) {
-		tr := True
-		tr.Clean()
-		if tr != True {
-			t.Errorf("Clean changed True to Unknown")
-		}
-	})
-}
-
-// TestMethodIsFalse tests the IsFalse method.
-func TestMethodIsFalse(t *testing.T) {
-	t.Run("IsFalse should return true for False", func(t *testing.T) {
-		tr := False
-		if !tr.IsFalse() {
-			t.Errorf("IsFalse returned false for False")
-		}
-	})
-
-	t.Run("IsFalse should return false for Unknown", func(t *testing.T) {
-		tr := Unknown
-		if tr.IsFalse() {
-			t.Errorf("IsFalse returned true for Unknown")
-		}
-	})
-
-	t.Run("IsFalse should return false for True", func(t *testing.T) {
-		tr := True
-		if tr.IsFalse() {
-			t.Errorf("IsFalse returned true for True")
-		}
-	})
-}
-
-// TestMethodIsUnknown tests the IsUnknown method.
-func TestMethodIsUnknown(t *testing.T) {
-	t.Run("IsUnknown should return false for False", func(t *testing.T) {
-		tr := False
-		if tr.IsUnknown() {
-			t.Errorf("IsUnknown returned true for False")
-		}
-	})
-
-	t.Run("IsUnknown should return true for Unknown", func(t *testing.T) {
-		tr := Unknown
-		if !tr.IsUnknown() {
-			t.Errorf("IsUnknown returned false for Unknown")
-		}
-	})
-
-	t.Run("IsUnknown should return false for True", func(t *testing.T) {
-		tr := True
-		if tr.IsUnknown() {
-			t.Errorf("IsUnknown returned true for True")
-		}
-	})
-}
-
-// TestMethodIsTrue tests the IsTrue method.
-func TestMethodIsTrue(t *testing.T) {
-	t.Run("IsTrue should return false for False", func(t *testing.T) {
-		tr := False
-		if tr.IsTrue() {
-			t.Errorf("IsTrue returned true for False")
-		}
-	})
-
-	t.Run("IsTrue should return false for Unknown", func(t *testing.T) {
-		tr := Unknown
-		if tr.IsTrue() {
-			t.Errorf("IsTrue returned true for Unknown")
-		}
-	})
-
-	t.Run("IsTrue should return true for True", func(t *testing.T) {
-		tr := True
-		if !tr.IsTrue() {
-			t.Errorf("IsTrue returned false for True")
-		}
-	})
-}
-
-// TestMethodSet tests the Set method.
-func TestMethodSet(t *testing.T) {
-	t.Run("Set value to False for negative integer", func(t *testing.T) {
-		tr := Trit(0)
-		tr.Set(-2)
-		if tr != False {
-			t.Errorf("Set did not set value to False for negative integer")
-		}
-	})
-
-	t.Run("Set should set value to Unknown for zero", func(t *testing.T) {
-		tr := Trit(1)
-		tr.Set(0)
-		if tr != Unknown {
-			t.Errorf("Set did not set value to Unknown for zero")
-		}
-	})
-
-	t.Run("Set value to True for positive integer", func(t *testing.T) {
-		tr := Trit(0)
-		tr.Set(2)
-		if tr != True {
-			t.Errorf("Set did not set value to True for positive integer")
-		}
-	})
-}
-
-// TestVal tests the Val method.
-func TestVal(t *testing.T) {
-	t.Run("Val should return False for negative Trit", func(t *testing.T) {
-		tr := Trit(-2)
-		if tr.Val() != False {
-			t.Errorf("Val did not return False for negative Trit")
-		}
-	})
-
-	t.Run("Val should return Unknown for zero Trit", func(t *testing.T) {
-		tr := Trit(0)
-		if tr.Val() != Unknown {
-			t.Errorf("Val did not return Unknown for zero Trit")
-		}
-	})
-
-	t.Run("Val should return True for positive Trit", func(t *testing.T) {
-		tr := Trit(2)
-		if tr.Val() != True {
-			t.Errorf("Val did not return True for positive Trit")
-		}
-	})
-}
-
-// TestNorm tests the Norm method.
-func TestNorm(t *testing.T) {
-	t.Run("Norm should normalize False to False", func(t *testing.T) {
-		tr := False
-		tr.Norm()
-		if tr != False {
-			t.Errorf("Norm did not normalize False to False")
-		}
-	})
-
-	t.Run("Norm should normalize Unknown to Unknown", func(t *testing.T) {
-		tr := Unknown
-		tr.Norm()
-		if tr != Unknown {
-			t.Errorf("Norm did not normalize Unknown to Unknown")
-		}
-	})
-
-	t.Run("Norm should normalize True to True", func(t *testing.T) {
-		tr := True
-		tr.Norm()
-		if tr != True {
-			t.Errorf("Norm did not normalize True to True")
-		}
-	})
-}
-
-// TestInt tests the Int method.
-func TestInt(t *testing.T) {
-	t.Run("Int should return -1 for False", func(t *testing.T) {
-		tr := False
-		if tr.Int() != -1 {
-			t.Errorf("Int did not return -1 for False")
-		}
-	})
-
-	t.Run("Int should return 0 for Unknown", func(t *testing.T) {
-		tr := Unknown
-		if tr.Int() != 0 {
-			t.Errorf("Int did not return 0 for Unknown")
-		}
-	})
-
-	t.Run("Int should return 1 for True", func(t *testing.T) {
-		tr := True
-		if tr.Int() != 1 {
-			t.Errorf("Int did not return 1 for True")
-		}
-	})
-}
-
-// TestString tests the String method.
+// TestString covers canonical and non-canonical values.
 func TestString(t *testing.T) {
-	t.Run("String should return 'False' for False", func(t *testing.T) {
-		tr := False
-		if tr.String() != "False" {
-			t.Errorf("String did not return 'False' for False")
+	cases := map[Trit]string{
+		False: "False", Unknown: "Unknown", True: "True",
+		Trit(-42): "False", Trit(42): "True",
+	}
+	for in, want := range cases {
+		if got := in.String(); got != want {
+			t.Errorf("Trit(%d).String() = %q, want %q", int8(in), got, want)
+		}
+	}
+}
+
+// TestMutators exercises the pointer-receiver helpers, including the corrected
+// Clean semantics (must reset ANY state to Unknown).
+func TestMutators(t *testing.T) {
+	t.Run("Default", func(t *testing.T) {
+		u := Unknown
+		if got := u.Default(True); got != True || u != True {
+			t.Errorf("Default on Unknown: got %s self=%s", got, u)
+		}
+		f := False
+		if got := f.Default(True); got != False || f != False {
+			t.Errorf("Default must not override a defined value, got %s", got)
 		}
 	})
 
-	t.Run("String should return 'Unknown' for Unknown", func(t *testing.T) {
-		tr := Unknown
-		if tr.String() != "Unknown" {
-			t.Errorf("String did not return 'Unknown' for Unknown")
+	t.Run("TrueIfUnknown", func(t *testing.T) {
+		u := Unknown
+		u.TrueIfUnknown()
+		if u != True {
+			t.Errorf("TrueIfUnknown: got %s", u)
+		}
+		f := False
+		f.TrueIfUnknown()
+		if f != False {
+			t.Errorf("TrueIfUnknown must not touch False, got %s", f)
 		}
 	})
 
-	t.Run("String should return 'True' for True", func(t *testing.T) {
+	t.Run("FalseIfUnknown", func(t *testing.T) {
+		u := Unknown
+		u.FalseIfUnknown()
+		if u != False {
+			t.Errorf("FalseIfUnknown: got %s", u)
+		}
 		tr := True
-		if tr.String() != "True" {
-			t.Errorf("String did not return 'True' for True")
+		tr.FalseIfUnknown()
+		if tr != True {
+			t.Errorf("FalseIfUnknown must not touch True, got %s", tr)
+		}
+	})
+
+	t.Run("Clean resets every state", func(t *testing.T) {
+		for _, start := range []Trit{False, Unknown, True, Trit(99)} {
+			v := start
+			if got := v.Clean(); got != Unknown || v != Unknown {
+				t.Errorf("Clean from %s: got %s self=%s, want Unknown",
+					start, got, v)
+			}
+		}
+	})
+
+	t.Run("Set by sign", func(t *testing.T) {
+		var v Trit
+		if v.Set(-7); v != False {
+			t.Errorf("Set(-7) = %s", v)
+		}
+		if v.Set(7); v != True {
+			t.Errorf("Set(7) = %s", v)
+		}
+		if v.Set(0); v != Unknown {
+			t.Errorf("Set(0) = %s", v)
 		}
 	})
 }
 
-// TestMethodNot tests the Not method.
-func TestMethodNot(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Not should return True for False", False, True},
-		{"Not should return Unknown for Unknown", Unknown, Unknown},
-		{"Not should return False for True", True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.in.Not()
-			if result != test.out {
-				t.Errorf("Not did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestMethodMa tests the Ma method.
-func TestMethodMa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Ma should return False for False", False, False},
-		{"Ma should return True for Unknown", Unknown, True},
-		{"Ma should return True for True", True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.in.Ma()
-			if result != test.out {
-				t.Errorf("Ma did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestMethodLa tests the La method.
-func TestMethodLa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"La should return False for False", False, False},
-		{"La should return False for Unknown", Unknown, False},
-		{"La should return True for True", True, True},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.in.La()
-			if result != test.out {
-				t.Errorf("La did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestMethodIa tests the Ia method.
-func TestMethodIa(t *testing.T) {
-	tests := []struct {
-		name string
-		in   Trit
-		out  Trit
-	}{
-		{"Ia should return False for False", False, False},
-		{"Ia should return True for Unknown", Unknown, True},
-		{"Ia should return False for True", True, False},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.in.Ia()
-			if result != test.out {
-				t.Errorf("Ia did not return %v for %v", test.out, test.in)
-			}
-		})
-	}
-}
-
-// TestMethodAnd tests the And method.
-func TestMethodAnd(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"And should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"And should return False for (False, Unknown)",
-			False, Unknown, False,
-		},
-		{
-			"And should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"And should return False for (Unknown, False)",
-			Unknown, False, False,
-		},
-		{
-			"And should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"And should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"And should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"And should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"And should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.And(test.b)
-			if result != test.out {
-				t.Errorf("And did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodOr tests the Or method.
-func TestMethodOr(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Or should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Or should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Or should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Or should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Or should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Or should return True for (Unknown, True)",
-			Unknown, True, True,
-		},
-		{
-			"Or should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Or should return True for (True, Unknown)",
-			True, Unknown, True,
-		},
-		{
-			"Or should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Or(test.b)
-			if result != test.out {
-				t.Errorf("Or did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodXor tests the Xor method.
-func TestMethodXor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Xor should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Xor should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Xor should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Xor should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Xor should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Xor should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Xor should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Xor should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Xor should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Xor(test.b)
-			if result != test.out {
-				t.Errorf("Xor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodNand tests the Nand method.
-func TestMethodNand(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Nand should return True for (False, False)",
-			False, False, True,
-		},
-		{
-			"Nand should return True for (False, Unknown)",
-			False, Unknown, True,
-		},
-		{
-			"Nand should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Nand should return True for (Unknown, False)",
-			Unknown, False, True,
-		},
-		{
-			"Nand should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Nand should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Nand should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Nand should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Nand should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Nand(test.b)
-			if result != test.out {
-				t.Errorf("Nand did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodNor tests the Nor method.
-func TestMethodNor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Nor should return True for (False, False)",
-			False, False, True,
-		},
-		{
-			"Nor should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Nor should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Nor should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Nor should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Nor should return False for (Unknown, True)",
-			Unknown, True, False,
-		},
-		{
-			"Nor should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"Nor should return False for (True, Unknown)",
-			True, Unknown, False,
-		},
-		{
-			"Nor should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Nor(test.b)
-			if result != test.out {
-				t.Errorf("Nor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodNxor tests the Nxor method.
-func TestMethodNxor(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Nxor should return True for (False, False)",
-			False, False, True,
-		},
-		{
-			"Nxor should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Nxor should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Nxor should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Nxor should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Nxor should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Nxor should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"Nxor should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Nxor should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Nxor(test.b)
-			if result != test.out {
-				t.Errorf("Nxor did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodMin tests the Min method.
-func TestMethodMin(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Min should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Min should return False for (False, Unknown)",
-			False, Unknown, False,
-		},
-		{
-			"Min should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Min should return False for (Unknown, False)",
-			Unknown, False, False,
-		},
-		{
-			"Min should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Min should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Min should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"Min should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Min should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Min(test.b)
-			if result != test.out {
-				t.Errorf("Min did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodMax tests the Max method.
-func TestMethodMax(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Max should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Max should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Max should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Max should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Max should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Max should return True for (Unknown, True)",
-			Unknown, True, True,
-		},
-		{
-			"Max should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Max should return True for (True, Unknown)",
-			True, Unknown, True,
-		},
-		{
-			"Max should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Max(test.b)
-			if result != test.out {
-				t.Errorf("Max did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodImp tests the Imp method.
-func TestMethodImp(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Imp should return True for (False, False)",
-			False, False, True,
-		},
-		{
-			"Imp should return True for (False, Unknown)",
-			False, Unknown, True,
-		},
-		{
-			"Imp should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Imp should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Imp should return True for (Unknown, Unknown)",
-			Unknown, Unknown, True,
-		},
-		{
-			"Imp should return True for (Unknown, True)",
-			Unknown, True, True,
-		},
-		{
-			"Imp should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"Imp should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Imp should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Imp(test.b)
-			if result != test.out {
-				t.Errorf("Imp did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodNimp tests the Nimp method.
-func TestMethodNimp(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Nimp should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Nimp should return False for (False, Unknown)",
-			False, Unknown, False,
-		},
-		{
-			"Nimp should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Nimp should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Nimp should return False for (Unknown, Unknown)",
-			Unknown, Unknown, False,
-		},
-		{
-			"Nimp should return False for (Unknown, True)",
-			Unknown, True, False,
-		},
-		{
-			"Nimp should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Nimp should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Nimp should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Nimp(test.b)
-			if result != test.out {
-				t.Errorf("Nimp did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodEq tests the Eq method.
-func TestMethodEq(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Eq should return True for (False, False)",
-			False, False, True,
-		},
-		{
-			"Eq should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Eq should return False for (False, True)",
-			False, True, False,
-		},
-		{
-			"Eq should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Eq should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Eq should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Eq should return False for (True, False)",
-			True, False, False,
-		},
-		{
-			"Eq should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Eq should return True for (True, True)",
-			True, True, True,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Eq(test.b)
-			if result != test.out {
-				t.Errorf("Eq did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestMethodNeq tests the Neq method.
-func TestMethodNeq(t *testing.T) {
-	tests := []struct {
-		name string
-		a    Trit
-		b    Trit
-		out  Trit
-	}{
-		{
-			"Neq should return False for (False, False)",
-			False, False, False,
-		},
-		{
-			"Neq should return Unknown for (False, Unknown)",
-			False, Unknown, Unknown,
-		},
-		{
-			"Neq should return True for (False, True)",
-			False, True, True,
-		},
-		{
-			"Neq should return Unknown for (Unknown, False)",
-			Unknown, False, Unknown,
-		},
-		{
-			"Neq should return Unknown for (Unknown, Unknown)",
-			Unknown, Unknown, Unknown,
-		},
-		{
-			"Neq should return Unknown for (Unknown, True)",
-			Unknown, True, Unknown,
-		},
-		{
-			"Neq should return True for (True, False)",
-			True, False, True,
-		},
-		{
-			"Neq should return Unknown for (True, Unknown)",
-			True, Unknown, Unknown,
-		},
-		{
-			"Neq should return False for (True, True)",
-			True, True, False,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := test.a.Neq(test.b)
-			if result != test.out {
-				t.Errorf("Neq did not return %v for (%v, %v)",
-					test.out, test.a, test.b)
-			}
-		})
-	}
-}
-
-// TestCanBeBool tests CanBeBool method.
-func TestCanBeBool(t *testing.T) {
-	tests := []struct {
-		name string
-		trit Trit
-		want bool
-	}{
-		{"True can be bool", True, true},
-		{"False can be bool", False, true},
-		{"Unknown cannot be bool", Unknown, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.trit.CanBeBool(); got != tt.want {
-				t.Errorf("CanBeBool() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-// TestToBool tests ToBool method.
+// TestToBool covers the safe bool conversion and its sentinel error.
 func TestToBool(t *testing.T) {
-	tests := []struct {
-		name    string
-		trit    Trit
-		want    bool
-		wantErr bool
-	}{
-		{"True to true", True, true, false},
-		{"False to false", False, false, false},
-		{"Unknown returns error", Unknown, false, true},
+	if b, err := True.ToBool(); err != nil || b != true {
+		t.Errorf("True.ToBool() = %v, %v", b, err)
+	}
+	if b, err := False.ToBool(); err != nil || b != false {
+		t.Errorf("False.ToBool() = %v, %v", b, err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.trit.ToBool()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ToBool() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr && got != tt.want {
-				t.Errorf("ToBool() = %v, want %v", got, tt.want)
-			}
-		})
+	b, err := Unknown.ToBool()
+	if b != false || !errors.Is(err, ErrUnknownValue) {
+		t.Errorf("Unknown.ToBool() = %v, %v; want false, ErrUnknownValue", b, err)
+	}
+
+	if True.CanBeBool() == false || Unknown.CanBeBool() == true {
+		t.Errorf("CanBeBool mismatch")
 	}
 }
 
-// TestTritJSON tests Marshal/Unmarshal.
-func TestTritJSON(t *testing.T) {
-	type testStruct struct {
-		Value Trit `json:"value"`
+// TestJSONRoundTrip verifies the canonical mapping and lossless round-trip.
+func TestJSONRoundTrip(t *testing.T) {
+	want := map[Trit]string{
+		False: "false", Unknown: "null", True: "true",
 	}
-
-	tests := []struct {
-		name string
-		data testStruct
-		json string
-	}{
-		{
-			name: "True to JSON",
-			data: testStruct{Value: True},
-			json: `{"value":true}`,
-		},
-		{
-			name: "False to JSON",
-			data: testStruct{Value: False},
-			json: `{"value":false}`,
-		},
-		{
-			name: "Unknown to JSON",
-			data: testStruct{Value: Unknown},
-			json: `{"value":null}`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := json.Marshal(tt.data)
-			if err != nil {
-				t.Errorf("Marshal() error = %v", err)
-				return
-			}
-			if string(got) != tt.json {
-				t.Errorf("Marshal() = %v, want %v", string(got), tt.json)
-			}
-
-			var result testStruct
-			err = json.Unmarshal([]byte(tt.json), &result)
-			if err != nil {
-				t.Errorf("Unmarshal() error = %v", err)
-				return
-			}
-			if result.Value != tt.data.Value {
-				t.Errorf("Unmarshal() = %v, want %v", result.Value, tt.data.Value)
-			}
-		})
-	}
-
-	t.Run("Invalid JSON", func(t *testing.T) {
-		var result testStruct
-		err := json.Unmarshal([]byte(`{"value":"invalid"}`), &result)
-		if err == nil {
-			t.Error("Expected error for invalid JSON value")
+	for v, js := range want {
+		got, err := json.Marshal(v)
+		if err != nil || string(got) != js {
+			t.Errorf("Marshal(%s) = %q, %v; want %q", v, got, err, js)
 		}
-	})
+
+		var back Trit
+		if err := json.Unmarshal([]byte(js), &back); err != nil {
+			t.Fatalf("Unmarshal(%q): %v", js, err)
+		}
+		if back != v {
+			t.Errorf("round-trip %s -> %q -> %s", v, js, back)
+		}
+	}
+}
+
+// TestUnmarshalJSONTolerant checks the new number-accepting behaviour and that
+// junk is rejected instead of silently mapped.
+func TestUnmarshalJSONTolerant(t *testing.T) {
+	ok := map[string]Trit{
+		"null": Unknown, "true": True, "false": False,
+		"1": True, "42": True, "-1": False, "-7": False, "0": Unknown,
+		"1.5": True, "-0.0": Unknown, " true ": True,
+	}
+	for in, want := range ok {
+		var v Trit
+		if err := json.Unmarshal([]byte(in), &v); err != nil {
+			t.Errorf("Unmarshal(%q) unexpected error: %v", in, err)
+			continue
+		}
+		if v != want {
+			t.Errorf("Unmarshal(%q) = %s, want %s", in, v, want)
+		}
+	}
+
+	for _, bad := range []string{`"true"`, `"maybe"`, `[]`, `{}`, `abc`} {
+		var v Trit
+		if err := json.Unmarshal([]byte(bad), &v); err == nil {
+			t.Errorf("Unmarshal(%q) = %s, want error", bad, v)
+		}
+	}
+}
+
+// TestTextMarshaling checks MarshalText/UnmarshalText and their round-trip.
+func TestTextMarshaling(t *testing.T) {
+	for _, v := range canonical {
+		b, err := v.MarshalText()
+		if err != nil || string(b) != v.String() {
+			t.Errorf("MarshalText(%s) = %q, %v", v, b, err)
+		}
+
+		var back Trit
+		if err := back.UnmarshalText(b); err != nil || back != v {
+			t.Errorf("UnmarshalText(%q) = %s, %v", b, back, err)
+		}
+	}
+
+	var v Trit
+	if err := v.UnmarshalText([]byte("garbage")); !errors.Is(err, ErrInvalidTrit) {
+		t.Errorf("UnmarshalText(garbage) err = %v, want ErrInvalidTrit", err)
+	}
+}
+
+// TestParseTrit covers the recognized tokens (case/space-insensitive) and the
+// error path.
+func TestParseTrit(t *testing.T) {
+	trues := []string{"true", "T", "Yes", " y ", "ON", "1"}
+	falses := []string{"false", "F", "no", "N", "off", "-1"}
+	unknowns := []string{"unknown", "U", "maybe", "NULL", "nil", "none", "0", "", "  "}
+
+	check := func(inputs []string, want Trit) {
+		for _, in := range inputs {
+			got, err := ParseTrit(in)
+			if err != nil || got != want {
+				t.Errorf("ParseTrit(%q) = %s, %v; want %s", in, got, err, want)
+			}
+		}
+	}
+	check(trues, True)
+	check(falses, False)
+	check(unknowns, Unknown)
+
+	for _, bad := range []string{"tru", "2", "-2", "yeah", "?"} {
+		if _, err := ParseTrit(bad); !errors.Is(err, ErrInvalidTrit) {
+			t.Errorf("ParseTrit(%q) err = %v, want ErrInvalidTrit", bad, err)
+		}
+	}
+}
+
+// TestCompare verifies the total order False < Unknown < True, its consistency
+// with normalization, and the anti-symmetry / reflexivity properties.
+func TestCompare(t *testing.T) {
+	order := []Trit{False, Unknown, True}
+	for i, a := range order {
+		for j, b := range order {
+			want := 0
+			switch {
+			case i < j:
+				want = -1
+			case i > j:
+				want = 1
+			}
+			if got := a.Compare(b); got != want {
+				t.Errorf("%s.Compare(%s) = %d, want %d", a, b, got, want)
+			}
+			// Anti-symmetry: sign must invert when arguments swap.
+			if a.Compare(b) != -b.Compare(a) {
+				t.Errorf("anti-symmetry broken for %s,%s", a, b)
+			}
+		}
+	}
+
+	// Non-canonical inputs compare by their normalized value.
+	if Trit(50).Compare(True) != 0 || Trit(-50).Compare(False) != 0 {
+		t.Errorf("Compare must normalize non-canonical operands")
+	}
+}
+
+// TestValuer checks the driver.Valuer mapping, in particular Unknown -> NULL.
+func TestValuer(t *testing.T) {
+	cases := []struct {
+		in   Trit
+		want driver.Value
+	}{
+		{True, true},
+		{False, false},
+		{Unknown, nil},
+		{Trit(9), true},   // non-canonical positive
+		{Trit(-9), false}, // non-canonical negative
+	}
+	for _, c := range cases {
+		got, err := c.in.Value()
+		if err != nil {
+			t.Errorf("%s.Value() error: %v", c.in, err)
+		}
+		if got != c.want {
+			t.Errorf("%s.Value() = %#v, want %#v", c.in, got, c.want)
+		}
+	}
+}
+
+// TestScanner exercises every accepted driver value kind plus the error path,
+// and asserts the Value/Scan round-trip for canonical states.
+func TestScanner(t *testing.T) {
+	cases := []struct {
+		src  any
+		want Trit
+	}{
+		{nil, Unknown},
+		{true, True},
+		{false, False},
+		{int64(5), True},
+		{int64(-5), False},
+		{int64(0), Unknown},
+		{float64(1.2), True},
+		{float64(-1.2), False},
+		{float64(0), Unknown},
+		{[]byte("true"), True},
+		{[]byte("null"), Unknown},
+		{"false", False},
+		{"maybe", Unknown},
+	}
+	for _, c := range cases {
+		var v Trit
+		if err := v.Scan(c.src); err != nil {
+			t.Errorf("Scan(%#v) error: %v", c.src, err)
+			continue
+		}
+		if v != c.want {
+			t.Errorf("Scan(%#v) = %s, want %s", c.src, v, c.want)
+		}
+	}
+
+	// Unsupported type and unparseable string must error.
+	var v Trit
+	if err := v.Scan(struct{}{}); !errors.Is(err, ErrInvalidTrit) {
+		t.Errorf("Scan(struct{}) err = %v, want ErrInvalidTrit", err)
+	}
+	if err := v.Scan("nonsense"); !errors.Is(err, ErrInvalidTrit) {
+		t.Errorf("Scan(nonsense) err = %v, want ErrInvalidTrit", err)
+	}
+	if err := v.Scan([]byte("bogus")); !errors.Is(err, ErrInvalidTrit) {
+		t.Errorf("Scan([]byte bogus) err = %v, want ErrInvalidTrit", err)
+	}
+
+	// Round-trip through the driver interfaces.
+	for _, start := range canonical {
+		dv, err := start.Value()
+		if err != nil {
+			t.Fatalf("Value(%s): %v", start, err)
+		}
+		var back Trit
+		if err := back.Scan(dv); err != nil {
+			t.Fatalf("Scan(%#v): %v", dv, err)
+		}
+		if back != start {
+			t.Errorf("driver round-trip %s -> %#v -> %s", start, dv, back)
+		}
+	}
+}
+
+// TestUnaryMethods pins the four unary truth tables directly on the methods
+// (tables_test.go covers them through the exported helpers as well).
+func TestUnaryMethods(t *testing.T) {
+	type row struct{ not, ma, la, ia Trit }
+	want := map[Trit]row{
+		False:   {not: True, ma: False, la: False, ia: False},
+		Unknown: {not: Unknown, ma: True, la: False, ia: True},
+		True:    {not: False, ma: True, la: True, ia: False},
+	}
+	for _, v := range canonical {
+		w := want[v]
+		if v.Not() != w.not || v.Ma() != w.ma || v.La() != w.la || v.Ia() != w.ia {
+			t.Errorf("unary(%s): Not=%s Ma=%s La=%s Ia=%s",
+				v, v.Not(), v.Ma(), v.La(), v.Ia())
+		}
+	}
+}
+
+// TestFromFloatSpecials documents how the float mapping treats non-finite and
+// signed-zero inputs (used by the JSON/SQL number paths).
+func TestFromFloatSpecials(t *testing.T) {
+	cases := map[float64]Trit{
+		math.Inf(1):          True,
+		math.Inf(-1):         False,
+		math.NaN():           Unknown, // NaN is neither >0 nor <0
+		math.Copysign(0, -1): Unknown,
+	}
+	for in, want := range cases {
+		if got := fromFloat(in); got != want {
+			t.Errorf("fromFloat(%v) = %s, want %s", in, got, want)
+		}
+	}
 }

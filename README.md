@@ -15,16 +15,18 @@ Overall, this package can be beneficial in scenarios where a "maybe" or "unknown
 
 ## Installation
 ```bash
-go get github.com/goloop/trit
+go get github.com/goloop/trit/v2
 ```
 
 ## Features
 - Three-valued logic operations (True, False, Unknown)
+- Zero-value is Unknown: an uninitialized `Trit` is already meaningful
 - Safe bool conversions with Unknown state handling
-- JSON marshaling (Unknown → null)
-- Thread-safe parallel operations for slices
+- Serialization: JSON (Unknown → null), text, and `database/sql` (Unknown → NULL)
+- `ParseTrit` and `Compare` (ordering False < Unknown < True)
+- Slice aggregates: All, Any, None, Known, Consensus, Majority
 - Zero allocations for basic operations
-- Extensive test coverage
+- Extensive test coverage with property and fuzz tests
 - Comprehensive truth tables documentation
 
 ## Quick Start
@@ -35,7 +37,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 func main() {
@@ -302,7 +304,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // The defaultEnabled variable is used to set the default value

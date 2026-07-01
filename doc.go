@@ -17,7 +17,8 @@
 //   - Fundamental unary operations (NOT, MA, LA, IA)
 //   - Binary logic operations (AND, OR, XOR, etc.)
 //   - Extended operations (IMP, EQ, MIN, MAX)
-//   - Thread-safe parallel operations for slices
+//   - Slice aggregates (All, Any, None, Known, Consensus, Majority)
+//   - Serialization: JSON, text, and database/sql (Unknown maps to NULL)
 //   - Full set of comparison and testing methods
 //
 // # Quick Start
@@ -134,19 +135,21 @@
 //     T | U |  U        T | U |  U        T | U |  T
 //     T | T |  F        T | T |  F        T | T |  T
 //
-// # Thread Safety
+// # Concurrency
 //
-// All operations in this package are thread-safe. The parallel operations
-// (All, Any, Known) use goroutines for processing large slices and include
-// proper synchronization mechanisms.
+// A Trit is a plain int8 value and every operation is a pure function of its
+// inputs. The package holds no shared mutable state, so distinct Trit values
+// may be used concurrently without synchronization. As with any value, a
+// single Trit that is mutated (via the pointer-receiver helpers) while being
+// read from another goroutine still requires external synchronization.
 //
 // # Performance Considerations
 //
 // The package optimizes performance by:
 //   - Using int8 as the underlying type
-//   - Implementing efficient parallel processing for slice operations
+//   - Converting generic inputs with a reflection-free type switch
 //   - Providing direct value access methods
-//   - Minimizing memory allocations
+//   - Minimizing memory allocations (basic operations do not allocate)
 //
 // For more examples and detailed API documentation, see the individual method
 // documentation and the package examples.

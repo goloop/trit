@@ -1,12 +1,18 @@
 package trit
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 // ErrUnknownValue is returned when we try to convert Unknown to bool.
 var ErrUnknownValue = errors.New("cannot convert Unknown to bool")
+
+// ErrInvalidTrit is returned when a textual value cannot be parsed as a Trit.
+var ErrInvalidTrit = errors.New("invalid trit value")
 
 // Trit represents a trinary digit, which can take on three distinct
 // states: False, Unknown, or True. This type is a fundamental unit of
@@ -85,9 +91,10 @@ func (t *Trit) FalseIfUnknown() Trit {
 	return *t
 }
 
-// Clean is a method that checks if the value of the Trit is Unknown.
-// If it is, it resets the Trit to Unknown.
-// It then returns the updated Trit.
+// Clean resets the Trit to Unknown regardless of its current state and
+// returns the updated Trit. It is the counterpart of Set/Default: use it to
+// discard a previously determined value and fall back to the indeterminate
+// zero state.
 //
 // Example usage:
 //
@@ -95,10 +102,7 @@ func (t *Trit) FalseIfUnknown() Trit {
 //	t.Clean()
 //	fmt.Println(t.String()) // Output: Unknown
 func (t *Trit) Clean() Trit {
-	if t.Val() == Unknown {
-		*t = Unknown
-	}
-
+	*t = Unknown
 	return *t
 }
 
@@ -658,23 +662,148 @@ func (t Trit) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-// null is converted to Unknown, true to True, false to False.
+//
+// It accepts three JSON shapes, mirroring the "tolerant" nature of the type:
+//   - null           -> Unknown
+//   - true / false   -> True / False
+//   - a JSON number  -> sign-based: positive -> True, negative -> False,
+//     zero -> Unknown
 func (t *Trit) UnmarshalJSON(data []byte) error {
-	// Перевіряємо на null
-	if string(data) == "null" {
+	s := strings.TrimSpace(string(data))
+	if s == "null" {
 		*t = Unknown
 		return nil
 	}
 
 	var b bool
-	if err := json.Unmarshal(data, &b); err != nil {
+	if err := json.Unmarshal(data, &b); err == nil {
+		if b {
+			*t = True
+		} else {
+			*t = False
+		}
+		return nil
+	}
+
+	var n float64
+	if err := json.Unmarshal(data, &n); err == nil {
+		*t = fromFloat(n)
+		return nil
+	}
+
+	return fmt.Errorf("%w: %s", ErrInvalidTrit, s)
+}
+
+// MarshalText implements the encoding.TextMarshaler interface, producing
+// "True", "False" or "Unknown". This enables Trit values to be used with
+// text-based encoders (flags, YAML, TOML, CSV, map keys, etc.).
+func (t Trit) MarshalText() ([]byte, error) {
+	return []byte(t.String()), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface. It accepts
+// any value understood by ParseTrit (case-insensitive, whitespace-trimmed).
+func (t *Trit) UnmarshalText(data []byte) error {
+	v, err := ParseTrit(string(data))
+	if err != nil {
 		return err
 	}
 
-	if b {
-		*t = True
-	} else {
-		*t = False
+	*t = v
+	return nil
+}
+
+// ParseTrit parses a textual representation of a Trit. Parsing is
+// case-insensitive and ignores surrounding whitespace. The following tokens
+// are recognized:
+//
+//   - True:    "true", "t", "yes", "y", "on", "1"
+//   - False:   "false", "f", "no", "n", "off", "-1"
+//   - Unknown: "unknown", "u", "maybe", "null", "nil", "none", "0", ""
+//
+// Any other value returns ErrInvalidTrit.
+//
+// Example usage:
+//
+//	v, _ := trit.ParseTrit("maybe")
+//	fmt.Println(v.String()) // Output: Unknown
+func ParseTrit(s string) (Trit, error) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "true", "t", "yes", "y", "on", "1":
+		return True, nil
+	case "false", "f", "no", "n", "off", "-1":
+		return False, nil
+	case "unknown", "u", "maybe", "null", "nil", "none", "0", "":
+		return Unknown, nil
+	}
+
+	return Unknown, fmt.Errorf("%w: %q", ErrInvalidTrit, s)
+}
+
+// Compare compares two Trit values using the natural ordering
+// False < Unknown < True. It returns -1 if t sorts before o, +1 if it sorts
+// after, and 0 if they are equal. Non-canonical values are normalized first,
+// so Compare is consistent with Val. The signature matches the cmp.Compare
+// convention, so it can drive slices.SortFunc over a []Trit.
+func (t Trit) Compare(o Trit) int {
+	a, b := t.Val(), o.Val()
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// Value implements the driver.Valuer interface for database/sql. Unknown maps
+// to a SQL NULL, while True and False map to the boolean true and false. This
+// makes Trit a natural fit for nullable boolean columns.
+func (t Trit) Value() (driver.Value, error) {
+	if t.IsUnknown() {
+		return nil, nil
+	}
+
+	return t.IsTrue(), nil
+}
+
+// Scan implements the sql.Scanner interface for database/sql. It accepts the
+// driver value kinds and maps them onto a Trit:
+//   - nil            -> Unknown (SQL NULL)
+//   - bool           -> True / False
+//   - integer/float  -> sign-based (see Set)
+//   - string/[]byte  -> parsed via ParseTrit
+//
+// Unrecognized source types return ErrInvalidTrit.
+func (t *Trit) Scan(src any) error {
+	switch v := src.(type) {
+	case nil:
+		*t = Unknown
+	case bool:
+		if v {
+			*t = True
+		} else {
+			*t = False
+		}
+	case int64:
+		t.Set(int(v))
+	case float64:
+		*t = fromFloat(v)
+	case []byte:
+		parsed, err := ParseTrit(string(v))
+		if err != nil {
+			return err
+		}
+		*t = parsed
+	case string:
+		parsed, err := ParseTrit(v)
+		if err != nil {
+			return err
+		}
+		*t = parsed
+	default:
+		return fmt.Errorf("%w: unsupported source type %T", ErrInvalidTrit, src)
 	}
 
 	return nil

@@ -1,38 +1,20 @@
 package trit
 
 import (
-	"context"
-	"math/rand"
-	"reflect"
-	"runtime"
-	"sync"
-	"time"
+	"math/rand/v2"
 )
 
-var (
-	// The parallelTasks the number of parallel tasks.
-	parallelTasks = 1
-
-	// The maxParallelTasks is the maximum number of parallel tasks.
-	maxParallelTasks = runtime.NumCPU() * 3
-
-	// The minLoadPerGoroutine is the minimum slice size for processing
-	// in an individual goroutine. Essentially, it delineates the threshold
-	// at which it becomes worthwhile to divide the slice processing amongst
-	// multiple goroutines. If each goroutine isn't handling a sufficiently
-	// large subslice, the overhead of goroutine creation and management
-	// may outweigh the benefits of concurrent processing. This variable
-	// specifies the minimum number of iterations per goroutine to ensure
-	// an efficient division of labor.
-	minLoadPerGoroutine = 1024
-
-	// This line asserts at compile time that the type *Trit
-	// implements the Tritter interface.
-	_ Tritter = (*Trit)(nil)
-)
+// This line asserts at compile time that the type *Trit
+// implements the Tritter interface.
+var _ Tritter = (*Trit)(nil)
 
 // Logicable is a special data type from which to determine the state of Trit
 // in the context of three-valued logic.
+//
+// Signed and floating-point values map by sign: any negative value is False,
+// any positive value is True, and zero is Unknown. Unsigned values are True
+// when non-zero and Unknown when zero (they can never be negative). A bool
+// maps true to True and false to False.
 type Logicable interface {
 	bool | Trit |
 		int | int8 | int16 | int32 | int64 |
@@ -40,7 +22,8 @@ type Logicable interface {
 		float32 | float64
 }
 
-// Tritter is a special data type that implements the Trit interface.
+// Tritter is the behavioural contract of a three-valued digit. The concrete
+// *Trit type satisfies it (see the compile-time assertion above).
 type Tritter interface {
 	IsTrue() bool
 	IsFalse() bool
@@ -49,114 +32,81 @@ type Tritter interface {
 	String() string
 }
 
-// The logicFoundValue is a helper struct that holds a boolean value
-// and a Mutex to protect it from concurrent access.
-//
-// They are used in the In function to detect the desired result
-// in a separate goroutine.
-type logicFoundValue struct {
-	m     sync.Mutex
-	value Trit
-}
-
-// SetValue sets a new value for the Found. It locks the Mutex before
-// changing the value and unlocks it after the change is complete.
-func (f *logicFoundValue) SetValue(value Trit) {
-	f.m.Lock()
-	defer f.m.Unlock()
-	f.value = value
-}
-
-// GetValue retrieves the current value of the Found. It locks the Mutex
-// before reading the value and unlocks it after the read is complete.
-func (f *logicFoundValue) GetValue() Trit {
-	f.m.Lock()
-	defer f.m.Unlock()
-	return f.value
-}
-
-// The init initializes the randomGenerator variable.
-func init() {
-	parallelTasks = runtime.NumCPU() * 2
-}
-
-// ParallelTasks returns the number of parallel tasks.
-//
-// If the function is called without parameters, it returns the
-// current value of parallelTasks.
-//
-// A function can receive one or more values for parallelTasks,
-// these values are added together to form the final result for
-// parallelTasks. If the new value for parallelTasks is less than
-// or equal to zero - it will be set to 1, if it is greater than
-// maxParallelTasks - it will be set to maxParallelTasks.
-func ParallelTasks(v ...int) int {
-	if len(v) > 0 {
-		n := 0
-		for _, value := range v {
-			n += value
-		}
-
-		if n <= 0 {
-			parallelTasks = 1
-		} else if n > maxParallelTasks {
-			parallelTasks = maxParallelTasks
-		} else {
-			parallelTasks = n
-		}
+// fromInt maps a signed integer onto a Trit by its sign.
+func fromInt(v int64) Trit {
+	switch {
+	case v > 0:
+		return True
+	case v < 0:
+		return False
+	default:
+		return Unknown
 	}
-
-	return parallelTasks
 }
 
-// The logicToTrit function converts any logic type to Trit.
+// fromUint maps an unsigned integer onto a Trit. Unsigned values are never
+// negative, so the result is either True (non-zero) or Unknown (zero).
+func fromUint(v uint64) Trit {
+	if v > 0 {
+		return True
+	}
+	return Unknown
+}
+
+// fromFloat maps a floating-point value onto a Trit by its sign. Note that
+// negative zero has the same sign bit semantics as zero here and yields
+// Unknown, while NaN (which is neither > 0 nor < 0) also yields Unknown.
+func fromFloat(v float64) Trit {
+	switch {
+	case v > 0:
+		return True
+	case v < 0:
+		return False
+	default:
+		return Unknown
+	}
+}
+
+// logicToTrit converts any Logicable value to a normalized Trit. It uses a
+// plain type switch (no reflection): the switch already narrows the dynamic
+// type, so the mapping is a direct, allocation-free branch.
 func logicToTrit[T Logicable](v T) Trit {
-	switch any(v).(type) {
+	switch x := any(v).(type) {
 	case bool:
-		if any(v).(bool) {
+		if x {
 			return True
 		}
 		return False
-	case int, int8, int16, int32, int64:
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16,
-			reflect.Int32, reflect.Int64:
-			value := reflect.ValueOf(v).Int()
-			if value > 0 {
-				return True
-			} else if value < 0 {
-				return False
-			}
-
-			return Unknown
-		}
-	case uint, uint8, uint16, uint32, uint64:
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Uint, reflect.Uint8, reflect.Uint16,
-			reflect.Uint32, reflect.Uint64:
-			value := reflect.ValueOf(v).Uint()
-			if value > 0 {
-				return True
-			}
-
-			// Can't be less than 0
-			return Unknown
-		}
-	case float32, float64:
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Float32, reflect.Float64:
-			value := reflect.ValueOf(v).Float()
-			if value > 0 {
-				return True
-			} else if value < 0 {
-				return False
-			}
-
-			return Unknown
-		}
+	case Trit:
+		return x.Val()
+	case int:
+		return fromInt(int64(x))
+	case int8:
+		return fromInt(int64(x))
+	case int16:
+		return fromInt(int64(x))
+	case int32:
+		return fromInt(int64(x))
+	case int64:
+		return fromInt(x)
+	case uint:
+		return fromUint(uint64(x))
+	case uint8:
+		return fromUint(uint64(x))
+	case uint16:
+		return fromUint(uint64(x))
+	case uint32:
+		return fromUint(uint64(x))
+	case uint64:
+		return fromUint(x)
+	case float32:
+		return fromFloat(float64(x))
+	case float64:
+		return fromFloat(x)
 	}
 
-	return any(v).(Trit)
+	// Unreachable for the Logicable type set, but keeps the function total.
+	return Unknown
 }
 
 // Default sets the default value for the trit-object
@@ -173,8 +123,7 @@ func Default[T Logicable](t *Trit, v T) Trit {
 		return *t
 	}
 
-	trit := logicToTrit(v)
-	*t = trit
+	*t = logicToTrit(v)
 	return *t
 }
 
@@ -182,32 +131,28 @@ func Default[T Logicable](t *Trit, v T) Trit {
 //
 // See Trit.IsFalse() for more information.
 func IsFalse[T Logicable](t T) bool {
-	trit := logicToTrit(t)
-	return trit.IsFalse()
+	return logicToTrit(t).IsFalse()
 }
 
 // IsUnknown checks if the trit-object is Unknown.
 //
 // See Trit.IsUnknown() for more information.
 func IsUnknown[T Logicable](t T) bool {
-	trit := logicToTrit(t)
-	return trit.IsUnknown()
+	return logicToTrit(t).IsUnknown()
 }
 
 // IsTrue checks if the trit-object is True.
 //
 // See Trit.IsTrue() for more information.
 func IsTrue[T Logicable](t T) bool {
-	trit := logicToTrit(t)
-	return trit.IsTrue()
+	return logicToTrit(t).IsTrue()
 }
 
 // Set sets the value of the trit-object.
 //
 // See Trit.Set() for more information.
 func Set[T Logicable](t *Trit, v T) Trit {
-	trit := logicToTrit(v)
-	*t = trit
+	*t = logicToTrit(v)
 	return *t
 }
 
@@ -220,12 +165,12 @@ func Set[T Logicable](t *Trit, v T) Trit {
 //	fmt.Println(tuf[1].String()) // Output: Unknown
 //	fmt.Println(tuf[2].String()) // Output: False
 func Convert[T Logicable](v ...T) []Trit {
-	trit := make([]Trit, len(v))
+	trits := make([]Trit, len(v))
 	for i, value := range v {
-		trit[i] = logicToTrit(value)
+		trits[i] = logicToTrit(value)
 	}
 
-	return trit
+	return trits
 }
 
 // Define converts the any Logicable type to Trit.
@@ -235,148 +180,53 @@ func Convert[T Logicable](v ...T) []Trit {
 //	t := trit.Define(true)
 //	fmt.Println(t.String()) // Output: True
 func Define[T Logicable](v T) Trit {
-	trit := logicToTrit(v)
-	return trit
+	return logicToTrit(v)
 }
 
-// All returns True if all the trit-objects are True.
+// All returns True if every value is True, and False as soon as any value is
+// False or Unknown.
+//
+// It follows the vacuous-truth convention of universal quantification: with
+// no arguments the predicate holds trivially, so All() returns True.
 //
 // Example usage:
 //
 //	t := trit.All(trit.True, trit.True, trit.True)
 //	fmt.Println(t.String()) // Output: True
 func All[T Logicable](t ...T) Trit {
-	var wg sync.WaitGroup
-
-	// Will use context to stop the rest of the goroutines
-	// if the value has already been found.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	p := parallelTasks
-	found := &logicFoundValue{value: True}
-
-	// If the length of the slice is less than or equal to
-	// the minLoadPerGoroutine, then we do not need
-	// to use goroutines.
-	if l := len(t); l == 0 {
-		return False
-	} else if l/p < minLoadPerGoroutine {
-		for _, v := range t {
-			trit := logicToTrit(v)
-			if trit.IsFalse() || trit.IsUnknown() {
-				return False
-			}
+	for _, v := range t {
+		trit := logicToTrit(v)
+		if trit.IsFalse() || trit.IsUnknown() {
+			return False
 		}
-
-		return True
 	}
 
-	chunkSize := len(t) / p
-	for i := 0; i < p; i++ {
-		wg.Add(1)
-
-		start := i * chunkSize
-		end := start + chunkSize
-		if i == p-1 {
-			end = len(t)
-		}
-
-		go func(start, end int) {
-			defer wg.Done()
-
-			for _, b := range t[start:end] {
-				trit := logicToTrit(b)
-				// Check if the context has been cancelled.
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				if trit.IsFalse() || trit.IsUnknown() {
-					found.SetValue(False)
-					cancel() // stop all other goroutines
-					return
-				}
-			}
-		}(start, end)
-	}
-
-	wg.Wait()
-	return found.GetValue()
+	return True
 }
 
-// Any returns True if any of the trit-objects are True.
+// Any returns True as soon as any value is True, and False otherwise.
+//
+// It follows the convention of existential quantification: with no arguments
+// there is nothing that can be True, so Any() returns False.
 //
 // Example usage:
 //
 //	t := trit.Any(trit.True, trit.False, trit.False)
 //	fmt.Println(t.String()) // Output: True
 func Any[T Logicable](t ...T) Trit {
-	var wg sync.WaitGroup
-
-	// Will use context to stop the rest of the goroutines
-	// if the value has already been found.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	p := parallelTasks
-	found := &logicFoundValue{value: False}
-
-	// If the length of the slice is less than or equal to
-	// the minLoadPerGoroutine, then we do not need
-	// to use goroutines.
-	if l := len(t); l == 0 {
-		return False
-	} else if l/p < minLoadPerGoroutine {
-		for _, v := range t {
-			trit := logicToTrit(v)
-			if trit.IsTrue() {
-				return True
-			}
+	for _, v := range t {
+		if logicToTrit(v).IsTrue() {
+			return True
 		}
-
-		return False
 	}
 
-	chunkSize := len(t) / p
-	for i := 0; i < p; i++ {
-		wg.Add(1)
-
-		start := i * chunkSize
-		end := start + chunkSize
-		if i == p-1 {
-			end = len(t)
-		}
-
-		go func(start, end int) {
-			defer wg.Done()
-
-			for _, b := range t[start:end] {
-				trit := logicToTrit(b)
-
-				// Check if the context has been cancelled.
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				if trit.IsTrue() {
-					found.SetValue(True)
-					cancel() // stop all other goroutines
-					return
-				}
-			}
-		}(start, end)
-	}
-
-	wg.Wait()
-	return found.GetValue()
+	return False
 }
 
-// None returns True if none of the trit-objects are True.
+// None returns True if none of the values are True, and False as soon as any
+// value is True.
+//
+// It is the negation of Any: None() returns True for an empty input.
 //
 // Example usage:
 //
@@ -384,8 +234,7 @@ func Any[T Logicable](t ...T) Trit {
 //	fmt.Println(t.String()) // Output: True
 func None[T Logicable](t ...T) Trit {
 	for _, v := range t {
-		trit := logicToTrit(v)
-		if trit.IsTrue() {
+		if logicToTrit(v).IsTrue() {
 			return False
 		}
 	}
@@ -398,8 +247,7 @@ func None[T Logicable](t ...T) Trit {
 //
 // See Trit.Not() for more information.
 func Not[T Logicable](t T) Trit {
-	trit := logicToTrit(t)
-	return trit.Not()
+	return logicToTrit(t).Not()
 }
 
 // Ma performs a logical MA (Modus Ponens Absorption) operation
@@ -407,8 +255,7 @@ func Not[T Logicable](t T) Trit {
 //
 // See Trit.Ma() for more information.
 func Ma[T Logicable](t T) Trit {
-	trit := logicToTrit(t)
-	return trit.Ma()
+	return logicToTrit(t).Ma()
 }
 
 // La performs a logical LA (Law of Absorption) operation on a Trit-Like
@@ -416,17 +263,15 @@ func Ma[T Logicable](t T) Trit {
 //
 // See Trit.La() for more information.
 func La[T Logicable](t T) Trit {
-	trit := logicToTrit(t)
-	return trit.La()
+	return logicToTrit(t).La()
 }
 
-// Ia performs a logical IA (Idempotent Absorption) operation on a Trit-Like
+// Ia performs a logical IA (Implication Absorption) operation on a Trit-Like
 // value and returns the result as Trit.
 //
 // See Trit.Ia() for more information.
 func Ia[T Logicable](t T) Trit {
-	trit := logicToTrit(t)
-	return trit.Ia()
+	return logicToTrit(t).Ia()
 }
 
 // And performs a logical AND operation between two Trit-Like values
@@ -434,9 +279,7 @@ func Ia[T Logicable](t T) Trit {
 //
 // See Trit.And() for more information.
 func And[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.And(tb)
+	return logicToTrit(a).And(logicToTrit(b))
 }
 
 // Or performs a logical OR operation between two Trit-Like values
@@ -444,9 +287,7 @@ func And[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Or() for more information.
 func Or[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Or(tb)
+	return logicToTrit(a).Or(logicToTrit(b))
 }
 
 // Xor performs a logical XOR operation between two Trit-Like values
@@ -454,9 +295,7 @@ func Or[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Xor() for more information.
 func Xor[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Xor(tb)
+	return logicToTrit(a).Xor(logicToTrit(b))
 }
 
 // Nand performs a logical NAND operation between two Trit-Like values
@@ -464,9 +303,7 @@ func Xor[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Nand() for more information.
 func Nand[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Nand(tb)
+	return logicToTrit(a).Nand(logicToTrit(b))
 }
 
 // Nor performs a logical NOR operation between two Trit-Like values
@@ -474,9 +311,7 @@ func Nand[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Nor() for more information.
 func Nor[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Nor(tb)
+	return logicToTrit(a).Nor(logicToTrit(b))
 }
 
 // Nxor performs a logical NXOR operation between two Trit-Like values
@@ -484,29 +319,23 @@ func Nor[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Nxor() for more information.
 func Nxor[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Nxor(tb)
+	return logicToTrit(a).Nxor(logicToTrit(b))
 }
 
 // Min performs a logical MIN operation between two Trit-Like values
-// and returns the result as Trit.
+// and returns the result as Trit. MIN is an alias of AND.
 //
 // See Trit.Min() for more information.
 func Min[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Min(tb)
+	return logicToTrit(a).Min(logicToTrit(b))
 }
 
 // Max performs a logical MAX operation between two Trit-Like values
-// and returns the result as Trit.
+// and returns the result as Trit. MAX is an alias of OR.
 //
 // See Trit.Max() for more information.
 func Max[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Max(tb)
+	return logicToTrit(a).Max(logicToTrit(b))
 }
 
 // Imp performs a logical IMP operation between two Trit-Like values
@@ -514,9 +343,7 @@ func Max[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Imp() for more information.
 func Imp[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Imp(tb)
+	return logicToTrit(a).Imp(logicToTrit(b))
 }
 
 // Nimp performs a logical NIMP operation between two Trit-Like values
@@ -524,9 +351,7 @@ func Imp[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Nimp() for more information.
 func Nimp[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Nimp(tb)
+	return logicToTrit(a).Nimp(logicToTrit(b))
 }
 
 // Eq performs a logical EQ operation between two Trit-Like values
@@ -534,9 +359,7 @@ func Nimp[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Eq() for more information.
 func Eq[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Eq(tb)
+	return logicToTrit(a).Eq(logicToTrit(b))
 }
 
 // Neq performs a logical NEQ operation between two Trit-Like values
@@ -544,13 +367,14 @@ func Eq[T, U Logicable](a T, b U) Trit {
 //
 // See Trit.Neq() for more information.
 func Neq[T, U Logicable](a T, b U) Trit {
-	ta := logicToTrit(a)
-	tb := logicToTrit(b)
-	return ta.Neq(tb)
+	return logicToTrit(a).Neq(logicToTrit(b))
 }
 
-// Known returns boolean true if all Trit-Like values has definiteness,
-// i.e. is either True or False.
+// Known returns True if every value is definite (True or False), and False as
+// soon as any value is Unknown.
+//
+// It follows the vacuous-truth convention: with no arguments there is no
+// Unknown value, so Known() returns True.
 //
 // Example usage:
 //
@@ -560,110 +384,36 @@ func Neq[T, U Logicable](a T, b U) Trit {
 //	b := trit.Known(trit.True, trit.True, trit.False)
 //	fmt.Println(b.String()) // Output: True
 func Known[T Logicable](ts ...T) Trit {
-	var wg sync.WaitGroup
-
-	// Will use context to stop the rest of the goroutines
-	// if the value has already been found.
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	p := parallelTasks
-	found := &logicFoundValue{value: True}
-
-	// If the length of the slice is less than or equal to
-	// the minLoadPerGoroutine, then we do not need
-	// to use goroutines.
-	if l := len(ts); l == 0 {
-		return False
-	} else if l/p < minLoadPerGoroutine {
-		for _, t := range ts {
-			trit := logicToTrit(t)
-			if trit == Unknown {
-				return False
-			}
-		}
-
-		return True
-	}
-
-	chunkSize := len(ts) / p
-	for i := 0; i < p; i++ {
-		wg.Add(1)
-
-		start := i * chunkSize
-		end := start + chunkSize
-		if i == p-1 {
-			end = len(ts)
-		}
-
-		go func(start, end int) {
-			defer wg.Done()
-
-			for _, b := range ts[start:end] {
-				trit := logicToTrit(b)
-
-				// Check if the context has been cancelled.
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				if trit.IsUnknown() {
-					found.SetValue(False)
-					cancel() // stop all other goroutines
-					return
-				}
-			}
-		}(start, end)
-	}
-
-	wg.Wait()
-	return found.GetValue()
-}
-
-// IsConfidence returns boolean true if all Trit-Like values has definiteness,
-// i.e. is either True or False.
-//
-// Example usage:
-//
-//	a := trit.IsConfidence(trit.True, trit.False, trit.Unknown)
-//	fmt.Println(a.String()) // Output: False
-//
-//	b := trit.IsConfidence(trit.True, trit.True, trit.False)
-//	fmt.Println(b.String()) // Output: True
-func IsConfidence[T Logicable](ts ...T) bool {
 	for _, t := range ts {
-		trit := logicToTrit(t)
-		if trit == Unknown {
-			return false
+		if logicToTrit(t).IsUnknown() {
+			return False
 		}
 	}
 
-	return true
+	return True
 }
 
 // Random returns a random Trit value.
-// The function can accept an optional argument that indicates the
-// percentage probability of the occurrence of the Unknown event.
+//
+// The optional argument sets the probability, in percent, of the Unknown
+// outcome; the remaining probability is split evenly between True and False.
+// Multiple arguments are summed and the total is clamped to the range [0, 100].
+// With no argument the probability of Unknown is 33%.
 //
 // Example usage:
 //
-//	 a := trit.Random()
-//	 fmt.Println(a.String()) // Output: True, False or Unknown
+//	a := trit.Random()
+//	fmt.Println(a.String()) // Output: True, False or Unknown
 //
 //	b := trit.Random(0)
-//	fmt.Println(b.String()) // Output: True or False
+//	fmt.Println(b.String()) // Output: True or False (never Unknown)
 //
 //	c := trit.Random(50)
-//	fmt.Println(c.String()) // Output: With a probability of 50% is Unknown
+//	fmt.Println(c.String()) // Output: Unknown with a probability of 50%
 func Random(up ...uint8) Trit {
-	// Determination of the probability of occurrence of the event Unknown.
-	var p int
-
-	if len(up) == 0 {
-		p = 33
-	} else {
+	p := 33
+	if len(up) > 0 {
+		p = 0
 		for _, v := range up {
 			p += int(v)
 		}
@@ -673,15 +423,15 @@ func Random(up ...uint8) Trit {
 		p = 100
 	}
 
-	// Generate random value.
-	rand.Seed(time.Now().UnixNano())
-	value := rand.Intn(100)
-
+	// value is drawn uniformly from [0, 100). The first p units go to Unknown;
+	// the remaining (100-p) units are split evenly: the lower half to True and
+	// the upper half to False. This keeps True and False symmetric for any p.
+	value := rand.IntN(100)
 	if value < p {
 		return Unknown
 	}
 
-	if value < (100-p)/2 {
+	if value < p+(100-p)/2 {
 		return True
 	}
 
@@ -689,19 +439,25 @@ func Random(up ...uint8) Trit {
 }
 
 // Consensus returns True if all input trits are True, False if all are False,
-// and Unknown otherwise.
+// and Unknown otherwise (including when any trit is Unknown).
+//
+// With no arguments there is no shared position to agree on, so Consensus()
+// returns Unknown.
 //
 // Example usage:
 //
 //	t1, t2, t3 := trit.True, trit.True, trit.Unknown
-//	result := Consensus(t1, t2, t3)
+//	result := trit.Consensus(t1, t2, t3)
 //	// result will be Unknown, as not all trits are the same
 func Consensus[T Logicable](trits ...T) Trit {
+	if len(trits) == 0 {
+		return Unknown
+	}
+
 	countT := 0
 	countF := 0
 	for _, x := range trits {
-		trit := logicToTrit(x)
-		switch trit.Val() {
+		switch logicToTrit(x) {
 		case True:
 			countT++
 		case False:
@@ -710,6 +466,7 @@ func Consensus[T Logicable](trits ...T) Trit {
 			return Unknown
 		}
 	}
+
 	if countT == len(trits) {
 		return True
 	} else if countF == len(trits) {
@@ -722,28 +479,30 @@ func Consensus[T Logicable](trits ...T) Trit {
 // Majority returns True if more than half of the input trits are True, False
 // if more than half are False, and Unknown otherwise.
 //
+// With no arguments there is no majority, so Majority() returns Unknown.
+//
 // Example usage:
 //
 //	t1, t2, t3, t4 := trit.True, trit.True, trit.False, trit.Unknown
-//	result := Majority(t1, t2, t3, t4)
+//	result := trit.Majority(t1, t2, t3, t4)
 //	// result will be True, as more than half of the trits are True
 func Majority[T Logicable](trits ...T) Trit {
 	countT := 0
 	countF := 0
 	for _, x := range trits {
-		trit := logicToTrit(x)
-		switch trit.Val() {
+		switch logicToTrit(x) {
 		case True:
 			countT++
 		case False:
 			countF++
 		}
 	}
+
 	if countT > len(trits)/2 {
 		return True
 	} else if countF > len(trits)/2 {
 		return False
-	} else {
-		return Unknown
 	}
+
+	return Unknown
 }

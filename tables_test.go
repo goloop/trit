@@ -3,7 +3,7 @@ package trit_test
 import (
 	"testing"
 
-	"github.com/goloop/trit"
+	"github.com/goloop/trit/v2"
 )
 
 // TestTruthTables tests of truth tables.
