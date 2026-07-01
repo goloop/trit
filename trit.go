@@ -235,6 +235,53 @@ func (t Trit) String() string {
 	return "Unknown"
 }
 
+// Operation lookup tables.
+//
+// Every Trit normalizes to one of {-1, 0, 1}; adding 1 maps it to a 0..2 index
+// in the order (False, Unknown, True). A base logic operation is therefore a
+// single table lookup. Keeping the truth tables as data — rather than as chains
+// of conditionals — makes them a direct, auditable transcription of the tables
+// documented above: the code is the specification. The derived operations
+// (Nand, Nor, Nxor, Nimp, Neq, Min, Max) remain compositions of these bases so
+// they can never drift out of sync.
+var (
+	// notTable indexes by a.Val()+1: F->T, U->U, T->F.
+	notTable = [3]Trit{True, Unknown, False}
+
+	// The binary tables index by [a.Val()+1][b.Val()+1].
+	//
+	//                          b=F       b=U       b=T
+	andTable = [3][3]Trit{
+		/* a=F */ {False, False, False},
+		/* a=U */ {False, Unknown, Unknown},
+		/* a=T */ {False, Unknown, True},
+	}
+
+	orTable = [3][3]Trit{
+		/* a=F */ {False, Unknown, True},
+		/* a=U */ {Unknown, Unknown, True},
+		/* a=T */ {True, True, True},
+	}
+
+	xorTable = [3][3]Trit{
+		/* a=F */ {False, Unknown, True},
+		/* a=U */ {Unknown, Unknown, Unknown},
+		/* a=T */ {True, Unknown, False},
+	}
+
+	impTable = [3][3]Trit{
+		/* a=F */ {True, True, True},
+		/* a=U */ {Unknown, True, True},
+		/* a=T */ {False, Unknown, True},
+	}
+
+	eqTable = [3][3]Trit{
+		/* a=F */ {True, Unknown, False},
+		/* a=U */ {Unknown, Unknown, Unknown},
+		/* a=T */ {False, Unknown, True},
+	}
+)
+
 // Not performs a logical NOT operation on a Trit value and returns the result.
 // This function applies the following rules based on the truth table for NOT:
 //   - Not(False)   => True
@@ -247,14 +294,7 @@ func (t Trit) String() string {
 //	result := t.Not()
 //	fmt.Println(result.String()) // Output: False
 func (t Trit) Not() Trit {
-	switch t.Val() {
-	case False:
-		return True
-	case True:
-		return False
-	}
-
-	return Unknown
+	return notTable[t.Val()+1]
 }
 
 // Ma performs a logical MA (Modus Ponens Absorption) operation on a Trit
@@ -337,15 +377,7 @@ func (t Trit) Ia() Trit {
 //	result := a.And(b)
 //	fmt.Println(result.String()) // Output: Unknown
 func (t Trit) And(trit Trit) Trit {
-	if t.Val() == False || trit.Val() == False {
-		return False
-	}
-
-	if t.Val() == Unknown || trit.Val() == Unknown {
-		return Unknown
-	}
-
-	return True
+	return andTable[t.Val()+1][trit.Val()+1]
 }
 
 // Or performs a logical OR operation between two Trit values and returns
@@ -368,15 +400,7 @@ func (t Trit) And(trit Trit) Trit {
 //	result := a.Or(b)
 //	fmt.Println(result.String()) // Output: True
 func (t Trit) Or(trit Trit) Trit {
-	if t.Val() == True || trit.Val() == True {
-		return True
-	}
-
-	if t.Val() == Unknown || trit.Val() == Unknown {
-		return Unknown
-	}
-
-	return False
+	return orTable[t.Val()+1][trit.Val()+1]
 }
 
 // Xor performs a logical XOR operation between two Trit values and returns
@@ -399,17 +423,7 @@ func (t Trit) Or(trit Trit) Trit {
 //	result := a.Xor(b)
 //	fmt.Println(result.String()) // Output: True
 func (t Trit) Xor(trit Trit) Trit {
-	// Check first, because Xor(Unknown, Unknown) should be Unknown.
-	if t.Val() == Unknown || trit.Val() == Unknown {
-		return Unknown
-	}
-
-	// Pay attention, Unknown == Unknown != False
-	if t.Val() == trit.Val() {
-		return False
-	}
-
-	return True
+	return xorTable[t.Val()+1][trit.Val()+1]
 }
 
 // Nand performs a logical NAND operation between two Trit values and returns
@@ -547,15 +561,7 @@ func (t Trit) Max(trit Trit) Trit {
 //	result := a.Imp(b)
 //	fmt.Println(result.String()) // Output: False
 func (t Trit) Imp(trit Trit) Trit {
-	if t.Val() == Unknown && trit.Val() == Unknown {
-		return True
-	} else if t.Val() == False || trit.Val() == True {
-		return True
-	} else if t.Val() == Unknown || trit.Val() == Unknown {
-		return Unknown
-	}
-
-	return False
+	return impTable[t.Val()+1][trit.Val()+1]
 }
 
 // Nimp performs a logical NIMP operation between two Trit values and returns
@@ -605,13 +611,7 @@ func (t Trit) Nimp(trit Trit) Trit {
 // It's True if both Trit are the same (either both True or both False),
 // and False if they are different.
 func (t Trit) Eq(trit Trit) Trit {
-	if t.Val() == Unknown || trit.Val() == Unknown {
-		return Unknown
-	} else if t.Val() == trit.Val() {
-		return True
-	}
-
-	return False
+	return eqTable[t.Val()+1][trit.Val()+1]
 }
 
 // Neq performs a logical NEQ operation between two Trit values and returns

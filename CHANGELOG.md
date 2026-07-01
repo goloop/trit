@@ -22,6 +22,9 @@ minimum Go version is 1.24.
 ### Changed
 - `logicToTrit` no longer uses reflection; conversion is a plain, allocation-
   free type switch.
+- The base operations (Not, And, Or, Xor, Imp, Eq) are implemented as constant
+  3x3 lookup tables, making each a direct transcription of its truth table; the
+  derived operations remain compositions of these bases.
 - `All`, `Any`, `None`, `Known` are now linear and allocation-free (the
   goroutine-based implementation and the `ParallelTasks` knob were removed —
   the per-element work is far too small to benefit from parallelism).
