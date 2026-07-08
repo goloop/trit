@@ -121,6 +121,13 @@ func TestMutators(t *testing.T) {
 		if got := f.Default(True); got != False || f != False {
 			t.Errorf("Default must not override a defined value, got %s", got)
 		}
+		// Default must store a canonical value, like Set does, so a raw
+		// out-of-range argument does not leak into the stored Trit.
+		n := Unknown
+		if got := n.Default(Trit(7)); got != True || n != True {
+			t.Errorf("Default must normalize its argument: got %d self=%d",
+				int8(got), int8(n))
+		}
 	})
 
 	t.Run("TrueIfUnknown", func(t *testing.T) {
@@ -351,6 +358,10 @@ func TestScanner(t *testing.T) {
 		{int64(5), True},
 		{int64(-5), False},
 		{int64(0), Unknown},
+		// Large magnitudes must stay sign-based on every platform, including
+		// 32-bit int targets (no narrowing int64 -> int).
+		{int64(1) << 40, True},
+		{-(int64(1) << 40), False},
 		{float64(1.2), True},
 		{float64(-1.2), False},
 		{float64(0), Unknown},

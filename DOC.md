@@ -1,4 +1,4 @@
-# trit — reference
+# trit - reference
 
 The full reference for the `trit` package: the mental model, states and
 conversions, the logic operators, the default-state helpers, serialization,
@@ -35,8 +35,8 @@ meaningful states:
 
 The key property: **the zero value is `Unknown`**, so an uninitialized `Trit` is
 already meaningful. That is what makes `trit` useful wherever a "maybe" or "not
-set" state matters — config merging, partial updates, nullable database columns,
-logic circuits — where a plain `bool` cannot tell "false" apart from "unset".
+set" state matters - config merging, partial updates, nullable database columns,
+logic circuits - where a plain `bool` cannot tell "false" apart from "unset".
 
 Because any negative/positive integer counts as False/True, normalize to the
 canonical `-1/0/1` with `Norm`/`Val` when you need the exact value.
@@ -47,7 +47,7 @@ import "github.com/goloop/trit/v2"
 
 ## States and the Logicable constraint
 
-Many functions are generic over `Logicable` — the set of types that can stand in
+Many functions are generic over `Logicable` - the set of types that can stand in
 for a ternary value: `bool`, the integer kinds, and `Trit` itself. This lets you
 pass a `bool`, an `int` or a `Trit` interchangeably:
 
@@ -101,7 +101,7 @@ func Default[T Logicable](t *Trit, v T) Trit
 ```
 
 `Default` sets the value only if it is currently `Unknown`, otherwise leaves it
-untouched — perfect for "apply a default without overwriting an explicit
+untouched - perfect for "apply a default without overwriting an explicit
 choice". `TrueIfUnknown`/`FalseIfUnknown` collapse `Unknown` to a definite state;
 `Clean` resets to `Unknown`.
 
@@ -120,7 +120,7 @@ func (t Trit) ToBool() (bool, error)
 ```
 
 `ToBool` returns the boolean value, or [`ErrUnknownValue`](#errors) for
-`Unknown` — so converting an unresolved state to `bool` is an explicit,
+`Unknown` - so converting an unresolved state to `bool` is an explicit,
 checkable operation rather than a silent guess. `CanBeBool` reports whether the
 conversion would succeed.
 
@@ -158,7 +158,7 @@ t1.Not()   // False
 func (t Trit) Compare(o Trit) int
 ```
 
-`Compare` orders `False < Unknown < True` and returns `-1`, `0` or `1` — the
+`Compare` orders `False < Unknown < True` and returns `-1`, `0` or `1` - the
 same contract as `cmp.Compare`, so it plugs directly into `slices.SortFunc`.
 
 ## Parsing
@@ -205,15 +205,15 @@ func Consensus[T Logicable](trits ...T) Trit
 func Majority[T Logicable](trits ...T) Trit
 ```
 
-- `All` / `Any` / `None` — the ternary quantifiers.
-- `Known` — whether every value is definite (not `Unknown`).
-- `Consensus` — the shared value when all agree, else `Unknown`.
-- `Majority` — the value held by more than half.
+- `All` / `Any` / `None` - the ternary quantifiers.
+- `Known` - whether every value is definite (not `Unknown`).
+- `Consensus` - the shared value when all agree, else `Unknown`.
+- `Majority` - the value held by more than half.
 
 ```go
-trit.All(true, true, trit.Unknown) // Unknown
-trit.Any(false, trit.True)         // True
-trit.Majority(true, true, false)   // True
+trit.All(trit.True, trit.True, trit.Unknown) // False (Unknown is not True)
+trit.Any(trit.False, trit.True)              // True
+trit.Majority(true, true, false)             // True
 ```
 
 ## Errors
@@ -230,7 +230,7 @@ var ErrUnknownValue = errors.New("cannot convert Unknown to bool")
 
 ```
  Truth Tables of Three-valued logic
- (T=True, N=Unknown, F=False)
+ (T=True, U=Unknown, F=False)
 
   A  | NA      A  | MA      A  | LA      A  | IA
  ----+----    ----+----    ----+----    ----+----
@@ -291,7 +291,7 @@ var ErrUnknownValue = errors.New("cannot convert Unknown to bool")
 
 **Partial config updates.** Give optional flags the type `trit.Trit`. An unset
 field stays `Unknown`, so you can apply `trit.Default(&field, fallback)` without
-clobbering an explicit `False` — the problem a plain `bool` cannot solve.
+clobbering an explicit `False` - the problem a plain `bool` cannot solve.
 
 **Nullable booleans.** Store a `Trit` in a nullable SQL column: `NULL` ⇄
 `Unknown` via `Value`/`Scan`, and JSON `null` ⇄ `Unknown` via the JSON methods.
@@ -304,4 +304,4 @@ False/True; call `Norm`/`Val` to get the canonical `-1/0/1` when the exact
 `int8` matters.
 
 **Convert deliberately.** Use `ToBool` (and check the error) rather than assuming
-`Unknown` is false — the explicit `ErrUnknownValue` keeps the ambiguity visible.
+`Unknown` is false - the explicit `ErrUnknownValue` keeps the ambiguity visible.

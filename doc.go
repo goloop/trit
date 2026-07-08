@@ -100,9 +100,16 @@
 //
 // 4. Extended Operations:
 //
-//   - IMP:  Implication (Lukasiewicz Logic)
+//   - IMP:  Implication (Lukasiewicz logic)
 //
 //   - EQ:   Equivalence (If and only if)
+//
+// Note the two operators deliberately follow different systems: IMP is
+// Lukasiewicz implication (Imp(U, U) = True), while EQ is Kleene equivalence
+// (Eq(U, U) = Unknown). As a result the material-implication and
+// mutual-implication identities do not hold at (Unknown, Unknown): Eq is not
+// And(Imp(a, b), Imp(b, a)), and Imp is not Or(Not(a), b) there. Compose these
+// operators with that difference in mind.
 //
 //   - MIN:  Minimum value
 //

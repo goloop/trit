@@ -424,15 +424,16 @@ func Random(up ...uint8) Trit {
 		p = 100
 	}
 
-	// value is drawn uniformly from [0, 100). The first p units go to Unknown;
-	// the remaining (100-p) units are split evenly: the lower half to True and
-	// the upper half to False. This keeps True and False symmetric for any p.
-	value := rand.IntN(100)
-	if value < p {
+	// value is drawn uniformly from [0, 200) so the remaining probability can
+	// be split exactly. The first 2p units go to Unknown; the remaining
+	// (200-2p) units (always even) are halved between True and False, keeping
+	// them symmetric for every integer percentage p.
+	value := rand.IntN(200)
+	if value < 2*p {
 		return Unknown
 	}
 
-	if value < p+(100-p)/2 {
+	if value < 2*p+(200-2*p)/2 {
 		return True
 	}
 

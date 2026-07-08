@@ -69,7 +69,7 @@ func BenchmarkLogicOperations(b *testing.B) {
 
 // BenchmarkAggregates benchmarks the slice aggregates over a range of sizes.
 // The decisive element is placed at the very end so the linear scan cannot
-// short-circuit early — this measures the true worst case.
+// short-circuit early - this measures the true worst case.
 func BenchmarkAggregates(b *testing.B) {
 	sizes := []int{100, 1000, 10000, 100000}
 

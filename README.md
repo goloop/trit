@@ -3,14 +3,14 @@
 # trit
 
 `trit` implements three-valued (ternary) logic in Go. A `Trit` is an `int8`
-with three states — `False` (any negative number), `Unknown` (`0`) and `True`
-(any positive number) — and the full set of ternary logic operators (`Not`,
+with three states - `False` (any negative number), `Unknown` (`0`) and `True`
+(any positive number) - and the full set of ternary logic operators (`Not`,
 `And`, `Or`, `Xor`, `Nand`, `Nor`, `Nxor`, implication, equivalence and more).
 
 The key property is that **the zero value is `Unknown`**, so an uninitialized
 `Trit` is already meaningful. That is what makes it useful wherever a "maybe" or
-"not set" state matters — config merging, partial updates, nullable database
-columns, logic circuits — where a plain `bool` cannot tell "false" apart from
+"not set" state matters - config merging, partial updates, nullable database
+columns, logic circuits - where a plain `bool` cannot tell "false" apart from
 "unset".
 
 ## Features
@@ -63,7 +63,7 @@ func main() {
 ```
 
 Why three-valued logic? A `bool` config field cannot distinguish "explicitly
-false" from "not provided". A `trit.Trit` field can — an unset field stays
+false" from "not provided". A `trit.Trit` field can - an unset field stays
 `Unknown`, so you can apply a default without clobbering an explicit choice:
 
 ```go

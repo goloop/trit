@@ -51,7 +51,7 @@ const (
 //	fmt.Println(t.String()) // Output: True
 func (t *Trit) Default(trit Trit) Trit {
 	if t.Val() == Unknown {
-		*t = trit
+		*t = trit.Val()
 	}
 
 	return *t
@@ -114,11 +114,7 @@ func (t *Trit) Clean() Trit {
 //	t := trit.Trit(-2)
 //	fmt.Println(t.IsFalse()) // Output: true
 func (t Trit) IsFalse() bool {
-	if int8(t) < 0 {
-		return true
-	}
-
-	return false
+	return int8(t) < 0
 }
 
 // IsUnknown returns true if the Trit value represents a Unknown state, which
@@ -129,11 +125,7 @@ func (t Trit) IsFalse() bool {
 //	t := trit.Trit(0)
 //	fmt.Println(t.IsUnknown()) // Output: true
 func (t Trit) IsUnknown() bool {
-	if int8(t) == 0 {
-		return true
-	}
-
-	return false
+	return int8(t) == 0
 }
 
 // IsTrue returns true if the Trit value represents a True state, which
@@ -144,11 +136,7 @@ func (t Trit) IsUnknown() bool {
 //	t := trit.Trit(2)
 //	fmt.Println(t.IsTrue()) // Output: true
 func (t Trit) IsTrue() bool {
-	if int8(t) > 0 {
-		return true
-	}
-
-	return false
+	return int8(t) > 0
 }
 
 // Set assigns a Trit value based on the given integer. Negative values
@@ -239,8 +227,8 @@ func (t Trit) String() string {
 //
 // Every Trit normalizes to one of {-1, 0, 1}; adding 1 maps it to a 0..2 index
 // in the order (False, Unknown, True). A base logic operation is therefore a
-// single table lookup. Keeping the truth tables as data — rather than as chains
-// of conditionals — makes them a direct, auditable transcription of the tables
+// single table lookup. Keeping the truth tables as data, rather than as chains
+// of conditionals, makes them a direct, auditable transcription of the tables
 // documented above: the code is the specification. The derived operations
 // (Nand, Nor, Nxor, Nimp, Neq, Min, Max) remain compositions of these bases so
 // they can never drift out of sync.
@@ -787,7 +775,7 @@ func (t *Trit) Scan(src any) error {
 			*t = False
 		}
 	case int64:
-		t.Set(int(v))
+		*t = fromInt(v)
 	case float64:
 		*t = fromFloat(v)
 	case []byte:

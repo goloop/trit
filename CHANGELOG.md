@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0]
+
+Minor release: correctness fixes and documentation corrections. Fully backward
+compatible.
+
+### Fixed
+- `Scan` maps an `int64` source by its sign directly, so large magnitudes are
+  no longer narrowed to `int` and misclassified on 32-bit platforms.
+- The `Default` method now stores a canonical value (like `Set`), so a raw
+  out-of-range argument no longer leaks into the stored `Trit`.
+- `Random` splits the non-Unknown probability exactly evenly between `True` and
+  `False`, removing the one-percentage-point bias toward `False`.
+- Corrected the aggregate examples in the reference docs, which did not compile
+  and misstated the result of `All`.
+
+### Documentation
+- Documented that `Imp` follows Lukasiewicz logic while `Eq` follows Kleene
+  logic, so the material- and mutual-implication identities do not hold at
+  `(Unknown, Unknown)`.
+
 ## [2.0.0]
 
 Major release. The module path is now `github.com/goloop/trit/v2` and the
@@ -26,7 +46,7 @@ minimum Go version is 1.24.
   3x3 lookup tables, making each a direct transcription of its truth table; the
   derived operations remain compositions of these bases.
 - `All`, `Any`, `None`, `Known` are now linear and allocation-free (the
-  goroutine-based implementation and the `ParallelTasks` knob were removed —
+  goroutine-based implementation and the `ParallelTasks` knob were removed -
   the per-element work is far too small to benefit from parallelism).
 - Empty-input convention: `All()`/`None()`/`Known()` return `True` (vacuous
   truth), `Any()` returns `False`, `Consensus()`/`Majority()` return `Unknown`.
